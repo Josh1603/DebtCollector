@@ -10,17 +10,18 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
-public class MyDialogFragment extends android.support.v4.app.DialogFragment {
+public class DollarCentInputFragment extends android.support.v4.app.DialogFragment {
 
-    EditText dollars;
-    EditText cents;
+    String uIDollars;
+    String uICents;
     DataPass dataPass;
+    EditText dollarsView;
+    EditText centsView;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.dialog_fragment, container);
-        dollars = v.findViewById(R.id.dollars);
-        cents = v.findViewById(R.id.cents);
-
+        dollarsView = v.findViewById(R.id.dollars);
+        centsView = v.findViewById(R.id.cents);
         return v;
     }
 
@@ -44,7 +45,9 @@ public class MyDialogFragment extends android.support.v4.app.DialogFragment {
         newTotalButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dataPass.dialogFragmentNewDebtValue(dollars.getText().toString(), cents.getText().toString());
+                uIDollars = dollarsView.getText().toString();
+                uICents = centsView.getText().toString();
+                dataPass.NewDebtValue(uIDollars, uICents);
                 getDialog().dismiss();
             }
         });
@@ -53,7 +56,9 @@ public class MyDialogFragment extends android.support.v4.app.DialogFragment {
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dataPass.dialogFragmentAddDebt(dollars.getText().toString(), cents.getText().toString());
+                uIDollars = dollarsView.getText().toString();
+                uICents = centsView.getText().toString();
+                dataPass.AddDebt(uIDollars, uICents);
                 getDialog().dismiss();
             }
         });
@@ -62,18 +67,20 @@ public class MyDialogFragment extends android.support.v4.app.DialogFragment {
         payOffButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                dataPass.dialogFragmentPayOffDebt(dollars.getText().toString(), cents.getText().toString());
+                uIDollars = dollarsView.getText().toString();
+                uICents = centsView.getText().toString();
+                dataPass.PayOffDebt(uIDollars, uICents);
                 getDialog().dismiss();
             }
         });
     }
 
     public interface DataPass {
-        void dialogFragmentNewDebtValue(String newDollarValue, String newCentValue);
+        void NewDebtValue(String uIDollarValue, String uICentValue);
 
-        void dialogFragmentAddDebt(String additionalDollarValue, String additionalCentValue);
+        void AddDebt(String uIDollarValue, String uICentValue);
 
-        void dialogFragmentPayOffDebt(String minusDollarValue, String minusCentValue);
+        void PayOffDebt(String uIDollarValue, String uICentValue);
     }
 
 }

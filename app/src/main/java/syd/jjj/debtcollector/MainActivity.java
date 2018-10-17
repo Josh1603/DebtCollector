@@ -2,6 +2,7 @@ package syd.jjj.debtcollector;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
@@ -17,13 +18,19 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, MyDialogFragment.DataPass {
+        implements NavigationView.OnNavigationItemSelectedListener, DollarCentInputFragment.DataPass {
 
     private TextView currentDebtValue;
-    private SharedPreferences prefs;
-    private String prefName = "MyPref";
+    private DollarsAndCents dollarsAndCents;
 
-    private final static String TEXT_VALUE_KEY = "textvalue";
+    private SharedPreferences dollarPrefs;
+    private SharedPreferences centPrefs;
+
+    private String currentDollarTotal = "MyCurrentDollarTotal";
+    private String currentCentTotal = "MyCurrentCentTotal";
+
+    private final static String CURRENT_DOLLAR_TOTAL_KEY = "current_dollar_total";
+    private final static String CURRENT_CENT_TOTAL_KEY = "current_cent_total";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,15 +40,15 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         currentDebtValue = findViewById(R.id.current_debt_value);
-        setCurrentDebtValue();
+        displayCurrentDebt();
 
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 FragmentManager fm = getSupportFragmentManager();
-                MyDialogFragment dm = new MyDialogFragment();
-                dm.show(fm, "chooser_fragment");
+                DollarCentInputFragment dm = new DollarCentInputFragment();
+                dm.show(fm, "ui_dollar_cent_fragment");
             }
         });
 
@@ -83,191 +90,79 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.action_settings) {
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
-
         if (id == R.id.nav_manage) {
-
         }
-
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
-    public void dialogFragmentNewDebtValue(String dollars, String cents) {
-        setCurrentDebtValue(dollars, cents);
+    public void NewDebtValue(String uIDollars, String uICents) {
+
+        dollarsAndCents = new DollarsAndCents(getCurrentDollarValue(), getCurrentCentValue(), uIDollars, uICents);
+        dollarsAndCents.newDebtValue();
+        storeCurrentDollarValue();
+        storeCurrentCentValue();
+        displayCurrentDebt();
     }
 
-    public void setCurrentDebtValue(String dollars, String cents) {
-        if (dollars.length() < 1) {
-            dollars = "0";
-        }
-        prefs = getSharedPreferences(prefName, MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        if (cents.length() > 1) {
-            editor.putString(TEXT_VALUE_KEY, "$" + dollars + "." + cents);
-        } else {
-            if (cents.length() > 0) {
-                editor.putString(TEXT_VALUE_KEY, "$" + dollars + "." + cents + "0");
 
-            } else {
-                editor.putString(TEXT_VALUE_KEY, "$" + dollars + "." + cents + "00");
-            }
-        }
+    public void AddDebt (String uIDollars, String uICents){
+
+        dollarsAndCents = new DollarsAndCents(getCurrentDollarValue(), getCurrentCentValue(), uIDollars, uICents);
+        dollarsAndCents.addDebt();
+        storeCurrentDollarValue();
+        storeCurrentCentValue();
+        displayCurrentDebt();
+    }
+
+    public void PayOffDebt (String uIDollars, String uICents){
+
+        dollarsAndCents = new DollarsAndCents(getCurrentDollarValue(), getCurrentCentValue(), uIDollars, uICents);
+        dollarsAndCents.payOffDebt();
+        storeCurrentDollarValue();
+        storeCurrentCentValue();
+        displayCurrentDebt();
+    }
+
+    public void storeCurrentDollarValue() {
+        dollarPrefs = getSharedPreferences(currentDollarTotal, MODE_PRIVATE);
+        SharedPreferences.Editor editor = dollarPrefs.edit();
+        editor.putString(CURRENT_DOLLAR_TOTAL_KEY, dollarsAndCents.getCurrentDollars());
         editor.apply();
-        setCurrentDebtValue();
     }
 
-        public void dialogFragmentAddDebt (String dollars, String cents){
+    public void storeCurrentCentValue() {
+        centPrefs = getSharedPreferences(currentCentTotal, MODE_PRIVATE);
+        SharedPreferences.Editor editor = centPrefs.edit();
+        editor.putString(CURRENT_CENT_TOTAL_KEY, dollarsAndCents.getCurrentCents());
+        editor.apply();
+    }
 
-            if (cents.length() < 1) {
-                cents = "00";
-            } else {
-                if (cents.length() < 2) {
-                    cents = cents.concat("0");
-                }
-            }
+    public String getCurrentDollarValue() {
+        dollarPrefs = getSharedPreferences(currentDollarTotal, MODE_PRIVATE);
+        return dollarPrefs.getString(CURRENT_DOLLAR_TOTAL_KEY, "0");
+    }
 
-            if (dollars.length() < 1) {
-                dollars = "00";
-            }
+    public String getCurrentCentValue() {
+        centPrefs = getSharedPreferences(currentCentTotal, MODE_PRIVATE);
+        return centPrefs.getString(CURRENT_CENT_TOTAL_KEY, "00");
+    }
 
-            String currentTotalStringDollar = currentDebtValue.getText().toString();
-            String currentTotalString = currentTotalStringDollar.replaceAll("[^0-9]", "");
-            int currentTotal = Integer.parseInt(currentTotalString);
-            String additionalDebtString = dollars.concat(cents);
-            int additionalDebt = Integer.parseInt(additionalDebtString);
-            int totalDebt = currentTotal + additionalDebt;
-            char[] totalDebtCharArray = (Integer.toString(totalDebt)).toCharArray();
-            char[] totalDollarsCharArray = new char[totalDebtCharArray.length - 2];
-            char[] totalCentsCharArray = new char[2];
-
-
-            for (int i = 0; i <= (totalDebtCharArray.length - 3); i++) {
-                totalDollarsCharArray[i] = totalDebtCharArray[i];
-            }
-
-            totalCentsCharArray[0] = totalDebtCharArray[totalDebtCharArray.length - 2];
-            totalCentsCharArray[1] = totalDebtCharArray[totalDebtCharArray.length - 1];
-
-            String totalDollars = String.valueOf(totalDollarsCharArray);
-            String totalCents = String.valueOf(totalCentsCharArray);
-
-            setCurrentDebtValue(totalDollars, totalCents);
-        }
-
-        public void dialogFragmentPayOffDebt (String dollars, String cents){
-
-            if (cents.length() < 1) {
-                cents = "00";
-            } else {
-                if (cents.length() < 2) {
-                    cents = cents.concat("0");
-                }
-            }
-
-            String currentTotalStringDollar = currentDebtValue.getText().toString();
-            String currentTotalString = currentTotalStringDollar.replaceAll("[^0-9]", "");
-            int currentTotal = Integer.parseInt(currentTotalString);
-            String minusDebtString = dollars.concat(cents);
-            int minusDebt = Integer.parseInt(minusDebtString);
-            int totalDebt = currentTotal - minusDebt;
-            int remainder;
-
-            if (totalDebt <= 0) {
-                remainder = -(totalDebt);
-                totalDebt = 000;
-                String remainderText = concatenatedIntToDollarCentString(remainder);
-
-                if (remainder != 0) {
-                    Snackbar snackbar = Snackbar.make(findViewById(R.id.main_view), "You paid off your debt and an additional " + remainderText + "!", Snackbar.LENGTH_LONG);
-                    snackbar.show();
-                } else {
-                    Snackbar snackbar = Snackbar.make(findViewById(R.id.main_view), "Woohoo! You've paid off all your debt.", Snackbar.LENGTH_LONG);
-                    snackbar.show();
-                }
-            }
-
-            if (totalDebt >= 10) {
-                char[] totalDebtCharArray = (Integer.toString(totalDebt)).toCharArray();
-                char[] totalDollarsCharArray = new char[totalDebtCharArray.length - 2];
-                char[] totalCentsCharArray = new char[2];
-
-
-                for (int i = 0; i <= (totalDebtCharArray.length - 3); i++) {
-                    totalDollarsCharArray[i] = totalDebtCharArray[i];
-                }
-
-                totalCentsCharArray[0] = totalDebtCharArray[totalDebtCharArray.length - 2];
-                totalCentsCharArray[1] = totalDebtCharArray[totalDebtCharArray.length - 1];
-
-                String totalDollars = String.valueOf(totalDollarsCharArray);
-                String totalCents = String.valueOf(totalCentsCharArray);
-
-                setCurrentDebtValue(totalDollars, totalCents);
-            } else {
-
-            if (totalDebt > 1) {
-                setCurrentDebtValue("0", Integer.toString(totalDebt));
-            } else {
-                setCurrentDebtValue("0", "00");
-            }
-            }
-        }
-
-
-        public void setCurrentDebtValue () {
-            prefs = getSharedPreferences(prefName, MODE_PRIVATE);
-            currentDebtValue.setText(prefs.getString(TEXT_VALUE_KEY, "$0.00"));
-        }
-
-        public String concatenatedIntToDollarCentString (int concatenatedInt) {
-
-        if (concatenatedInt >= 10) {
-
-            char[] totalDebtCharArray = (Integer.toString(concatenatedInt)).toCharArray();
-            char[] totalDollarsCharArray = new char[totalDebtCharArray.length - 2];
-            char[] totalCentsCharArray = new char[2];
-
-
-            for (int i = 0; i <= (totalDebtCharArray.length - 3); i++) {
-                totalDollarsCharArray[i] = totalDebtCharArray[i];
-            }
-
-            totalCentsCharArray[0] = totalDebtCharArray[totalDebtCharArray.length - 2];
-            totalCentsCharArray[1] = totalDebtCharArray[totalDebtCharArray.length - 1];
-
-            String totalDollars = String.valueOf(totalDollarsCharArray);
-            String totalCents = String.valueOf(totalCentsCharArray);
-            return dollarsAndCentsString(totalDollars, totalCents);
-        } else {
-            if (concatenatedInt > 0) {
-                return dollarsAndCentsString("0", Integer.toString(concatenatedInt));
-            } else {
-                return dollarsAndCentsString("0", "0");
-            }
-        }
-
-        }
-
-    public String dollarsAndCentsString(String dollars, String cents) {
-        if (cents.length() > 1) {
-            return "$" + dollars + "." + cents;
-        } else {
-            if (cents.length() > 0) {
-                return "$" + dollars + "." + cents + "0";
-            } else {
-                return "$" + dollars + "." + cents + "00";
-            }
-        }
+    public void displayCurrentDebt () {
+        dollarPrefs = getSharedPreferences(currentDollarTotal, MODE_PRIVATE);
+        centPrefs = getSharedPreferences(currentCentTotal, MODE_PRIVATE);
+        String total = "$" + dollarPrefs.getString(CURRENT_DOLLAR_TOTAL_KEY, "0")
+                + "." + centPrefs.getString(CURRENT_CENT_TOTAL_KEY, "00");
+        currentDebtValue.setText(total);
     }
 
 }
