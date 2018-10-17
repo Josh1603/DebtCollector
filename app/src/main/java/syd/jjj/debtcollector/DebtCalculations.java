@@ -1,10 +1,17 @@
 package syd.jjj.debtcollector;
 
-public class DollarsAndCents {
+/**
+ * This class can be used to perform simple operations on two debt values. Any negative values are
+ * rounded to zero.
+ */
+public class DebtCalculations {
 
-    public DollarsAndCents(String currentDollars, String currentCents, String uIDollars, String uICents){
+    public DebtCalculations(String currentDollars, String currentCents, String uIDollars, String uICents){
+
+        //The most recent debt total.
         this.currentDollars = currentDollars;
         this.currentCents = currentCents;
+        //The user inputted amount.
         this.uIDollars = uIDollars;
         this.uICents = uICents;
     }
@@ -14,20 +21,32 @@ public class DollarsAndCents {
     private String uIDollars;
     private String uICents;
 
+    /**
+     * Gets the most recent dollar value.
+     */
     public String getCurrentDollars(){
         return currentDollars;
     }
 
+    /**
+     * Gets the most recent cent value.
+     */
     public String getCurrentCents(){
         return currentCents;
     }
 
+    /**
+     * Sets the most recent debt total to the user inputted total.
+     */
     public void newDebtValue() {
         correctZeroValues();
         currentDollars = uIDollars;
         currentCents = uICents;
     }
 
+    /**
+     * Sets the most recent total to the sum of the previous total and the user inputted total.
+     */
     public void addDebt(){
 
         correctZeroValues();
@@ -40,6 +59,10 @@ public class DollarsAndCents {
         setNewTotal(newTotal);
     }
 
+    /**
+     * Sets the most recent total to the difference between the previous total and the user inputted total,
+     * unless the latter exceeds the former, in which case the current total is set to default values.
+     */
     public void payOffDebt (){
 
         correctZeroValues();
@@ -53,10 +76,13 @@ public class DollarsAndCents {
             String newTotal = Integer.toString(newTotalInt);
             setNewTotal(newTotal);
         } else {
-            setNewTotal("0");
+            setNewTotal("");
         }
     }
 
+    /**
+     * Corrects for any missing zero values in the user input.
+     */
     private void correctZeroValues() {
         //Sets a String value for dollars if none set by user.
         if (uIDollars.length() == 0) {
@@ -73,6 +99,9 @@ public class DollarsAndCents {
     }
 
 
+    /**
+     * Sets the new total, taking into account corrections required for smaller values.
+     */
     private void setNewTotal(String newTotal){
 
         int totalLength = newTotal.length();
