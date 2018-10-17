@@ -4,7 +4,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -17,11 +16,15 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
 
-public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, DollarCentInputFragment.DataPass {
+/**
+ * The main activity for this app. Current debt values are stored as shared preferences as a form of
+ * basic data persistence. Calculations are delegated to the DebtCalculation class.
+ */
+public class DebtCollectorActivity extends AppCompatActivity
+        implements NavigationView.OnNavigationItemSelectedListener, DollarCentInputFragment.DCIF2DCA {
 
     private TextView currentDebtValue;
-    private DollarsAndCents dollarsAndCents;
+    private DebtCalculations debtCalculations;
 
     private SharedPreferences dollarPrefs;
     private SharedPreferences centPrefs;
@@ -32,6 +35,9 @@ public class MainActivity extends AppCompatActivity
     private final static String CURRENT_DOLLAR_TOTAL_KEY = "current_dollar_total";
     private final static String CURRENT_CENT_TOTAL_KEY = "current_cent_total";
 
+    /**
+     * Displays the current debt value and provides a FAB which opens the DollarCentInputFragment.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -105,58 +111,84 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    /**
+     * Called by the inner interface of DollarCentInputFragment. This method gets the new debt value
+     * and displays it on the UI.
+     */
     public void NewDebtValue(String uIDollars, String uICents) {
 
-        dollarsAndCents = new DollarsAndCents(getCurrentDollarValue(), getCurrentCentValue(), uIDollars, uICents);
-        dollarsAndCents.newDebtValue();
+        debtCalculations = new DebtCalculations("0", "00", uIDollars, uICents);
+        debtCalculations.newDebtValue();
         storeCurrentDollarValue();
         storeCurrentCentValue();
         displayCurrentDebt();
     }
 
-
+    /**
+     * Called by the inner interface of DollarCentInputFragment. This method gets the summed debt value
+     * and displays it on the UI.
+     */
     public void AddDebt (String uIDollars, String uICents){
 
-        dollarsAndCents = new DollarsAndCents(getCurrentDollarValue(), getCurrentCentValue(), uIDollars, uICents);
-        dollarsAndCents.addDebt();
+        debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), uIDollars, uICents);
+        debtCalculations.addDebt();
         storeCurrentDollarValue();
         storeCurrentCentValue();
         displayCurrentDebt();
     }
 
+    /**
+     * Called by the inner interface of DollarCentInputFragment. This method gets the paid off debt value
+     * and displays it on the UI.
+     */
     public void PayOffDebt (String uIDollars, String uICents){
 
-        dollarsAndCents = new DollarsAndCents(getCurrentDollarValue(), getCurrentCentValue(), uIDollars, uICents);
-        dollarsAndCents.payOffDebt();
+        debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), uIDollars, uICents);
+        debtCalculations.payOffDebt();
         storeCurrentDollarValue();
         storeCurrentCentValue();
         displayCurrentDebt();
     }
 
+    /**
+     * Stores the current dollar value to shared preferences.
+     */
     public void storeCurrentDollarValue() {
         dollarPrefs = getSharedPreferences(currentDollarTotal, MODE_PRIVATE);
         SharedPreferences.Editor editor = dollarPrefs.edit();
-        editor.putString(CURRENT_DOLLAR_TOTAL_KEY, dollarsAndCents.getCurrentDollars());
+        editor.putString(CURRENT_DOLLAR_TOTAL_KEY, debtCalculations.getCurrentDollars());
         editor.apply();
     }
 
+    /**
+     * Stores the current cent value to shared preferences.
+     */
     public void storeCurrentCentValue() {
         centPrefs = getSharedPreferences(currentCentTotal, MODE_PRIVATE);
         SharedPreferences.Editor editor = centPrefs.edit();
-        editor.putString(CURRENT_CENT_TOTAL_KEY, dollarsAndCents.getCurrentCents());
+        editor.putString(CURRENT_CENT_TOTAL_KEY, debtCalculations.getCurrentCents());
         editor.apply();
     }
 
+    /**
+     * Gets the current dollar value from shared preferences.
+     */
     public String getCurrentDollarValue() {
         dollarPrefs = getSharedPreferences(currentDollarTotal, MODE_PRIVATE);
         return dollarPrefs.getString(CURRENT_DOLLAR_TOTAL_KEY, "0");
     }
 
+    /**
+     * Gets the current cent value from shared preferences.
+     */
     public String getCurrentCentValue() {
         centPrefs = getSharedPreferences(currentCentTotal, MODE_PRIVATE);
         return centPrefs.getString(CURRENT_CENT_TOTAL_KEY, "00");
     }
 
+    /**
+     * Displays the current debt value on the UI.
+     */
     public void displayCurrentDebt () {
         dollarPrefs = getSharedPreferences(currentDollarTotal, MODE_PRIVATE);
         centPrefs = getSharedPreferences(currentCentTotal, MODE_PRIVATE);

@@ -10,14 +10,21 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 
+/**
+ * This fragment allows the user to input their debt value and either add to, subtract from or reset
+ * the current debt value.
+ */
 public class DollarCentInputFragment extends android.support.v4.app.DialogFragment {
 
     String uIDollars;
     String uICents;
-    DataPass dataPass;
+    DCIF2DCA dataPass;
     EditText dollarsView;
     EditText centsView;
 
+    /**
+     * Assigns references to the EditText views when the the fragment is created.
+     */
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.dialog_fragment, container);
         dollarsView = v.findViewById(R.id.dollars);
@@ -25,11 +32,14 @@ public class DollarCentInputFragment extends android.support.v4.app.DialogFragme
         return v;
     }
 
+    /**
+     * Allows the inner interface to interact with the activity once the fragment is attached.
+     */
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
         try {
-            dataPass = (DataPass) context;
+            dataPass = (DCIF2DCA) context;
         } catch (ClassCastException e) {
             throw new ClassCastException(context.toString()
                     + " must implement DataPass");
@@ -37,6 +47,9 @@ public class DollarCentInputFragment extends android.support.v4.app.DialogFragme
         }
     }
 
+    /**
+     * Adds the button views and assigns listeners to the fragment once the view is created.
+     */
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -75,7 +88,11 @@ public class DollarCentInputFragment extends android.support.v4.app.DialogFragme
         });
     }
 
-    public interface DataPass {
+    /**
+     * This inner interface provides the methods which require interaction between the fragment and
+     * activity.
+     */
+    public interface DCIF2DCA {
         void NewDebtValue(String uIDollarValue, String uICentValue);
 
         void AddDebt(String uIDollarValue, String uICentValue);
