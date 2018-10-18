@@ -20,6 +20,8 @@ public class DebtCalculations {
     private String currentCents;
     private String uIDollars;
     private String uICents;
+    private String remainderText;
+    private boolean isPaidOff;
 
     /**
      * Gets the most recent dollar value.
@@ -36,9 +38,18 @@ public class DebtCalculations {
     }
 
     /**
+     * Get remainder text.
+     */
+    public String getRemainderText() {
+        return remainderText;
+    }
+
+    /**
      * Sets the most recent debt total to the user inputted total.
      */
     public void newDebtValue() {
+
+        isPaidOff = false;
         correctZeroValues();
         currentDollars = uIDollars;
         currentCents = uICents;
@@ -49,6 +60,7 @@ public class DebtCalculations {
      */
     public void addDebt(){
 
+        isPaidOff = false;
         correctZeroValues();
         String currentTotal = currentDollars.concat(currentCents);
         String uITotal = uIDollars.concat(uICents);
@@ -72,10 +84,22 @@ public class DebtCalculations {
         int uITotalInt = Integer.parseInt(uITotal);
         int newTotalInt = currentTotalInt - uITotalInt;
 
-        if (newTotalInt >= 0) {
+        if (newTotalInt > 0) {
             String newTotal = Integer.toString(newTotalInt);
             setNewTotal(newTotal);
-        } else {
+        }
+
+        if (newTotalInt == 0) {
+            isPaidOff = true;
+            remainderText = "";
+            setNewTotal("");
+        }
+
+        if (newTotalInt < 0) {
+            String newTotal = Integer.toString(-newTotalInt);
+            setNewTotal(newTotal);
+            isPaidOff = true;
+            remainderText = "$" + currentDollars + "." +currentCents;
             setNewTotal("");
         }
     }
@@ -125,5 +149,9 @@ public class DebtCalculations {
             currentDollars = newTotal.substring(0, totalLength - 2);
             currentCents = newTotal.substring(totalLength - 2);
         }
+    }
+
+    public boolean isPaidOff() {
+        return isPaidOff;
     }
 }
