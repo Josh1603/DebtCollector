@@ -1,10 +1,13 @@
 package syd.jjj.debtcollector;
 
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
+import android.view.Gravity;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -36,7 +39,7 @@ public class DebtCollectorActivity extends AppCompatActivity
     private final static String CURRENT_CENT_TOTAL_KEY = "current_cent_total";
 
     /**
-     * Displays the current debt value and provides a FAB which opens the DollarCentInputFragment.
+     * Displays the current debt value and provides a FAB which displays the DollarCentInputFragment.
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -148,6 +151,17 @@ public class DebtCollectorActivity extends AppCompatActivity
         storeCurrentDollarValue();
         storeCurrentCentValue();
         displayCurrentDebt();
+        if (debtCalculations.isPaidOff() && debtCalculations.getRemainderText() == "") {
+            Snackbar debtPaidOffSnackbar = Snackbar.make(findViewById(R.id.main_view), "Woohoo! You've paid off all your debt.", Snackbar.LENGTH_LONG);
+            centerAlignSnackbarText(debtPaidOffSnackbar);
+            debtPaidOffSnackbar.show();
+        }
+
+        if (debtCalculations.isPaidOff() && debtCalculations.getRemainderText() != "") {
+            Snackbar debtPaidOffSnackbar = Snackbar.make(findViewById(R.id.main_view), "You've paid off your debt and an additional " + debtCalculations.getRemainderText() + "!", Snackbar.LENGTH_LONG);
+            centerAlignSnackbarText(debtPaidOffSnackbar);
+            debtPaidOffSnackbar.show();
+        }
     }
 
     /**
@@ -195,6 +209,20 @@ public class DebtCollectorActivity extends AppCompatActivity
         String total = "$" + dollarPrefs.getString(CURRENT_DOLLAR_TOTAL_KEY, "0")
                 + "." + centPrefs.getString(CURRENT_CENT_TOTAL_KEY, "00");
         currentDebtValue.setText(total);
+    }
+
+    /**
+     * Centrally aligns the text in a given Snackbar.
+     * @param snackbar
+     */
+    public void centerAlignSnackbarText(Snackbar snackbar) {
+        View view = snackbar.getView();
+        TextView textView = view.findViewById(android.support.design.R.id.snackbar_text);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
+        } else {
+            textView.setGravity(Gravity.CENTER_HORIZONTAL);
+        }
     }
 
 }
