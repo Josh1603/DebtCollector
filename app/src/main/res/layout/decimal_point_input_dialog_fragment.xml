@@ -8,7 +8,7 @@
 
     <TextView
         android:id="@+id/dialog_fragment_textview"
-        android:text="Total payment"
+        android:text="@string/total_payment"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         app:layout_constraintRight_toRightOf="parent"
@@ -20,63 +20,39 @@
         android:id="@+id/dollar_sign"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="$"
-        app:layout_constraintRight_toLeftOf="@+id/dollars"
+        android:text="@string/dollar_sign"
+        app:layout_constraintRight_toLeftOf="@+id/dollar_cent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintTop_toBottomOf="@id/dialog_fragment_textview"
         app:layout_constraintBottom_toTopOf="@id/addButton" />
 
     <EditText
-        android:id="@+id/dollars"
+        android:id="@+id/dollar_cent"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:hint="0000"
+        android:hint="@string/_0_00"
         android:selectAllOnFocus="true"
-        android:inputType="number"
-        android:gravity="right"
-        app:layout_constraintRight_toLeftOf="@+id/decimal"
+        android:inputType="numberDecimal"
+        app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintLeft_toRightOf="@+id/dollar_sign"
         app:layout_constraintTop_toBottomOf="@+id/dialog_fragment_textview"
         app:layout_constraintBottom_toTopOf="@+id/addButton"
-        android:imeOptions="actionNext"/>
-
-    <TextView
-        android:id="@+id/decimal"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="."
-        app:layout_constraintRight_toLeftOf="@+id/cents"
-        app:layout_constraintLeft_toRightOf="@+id/dollars"
-        app:layout_constraintTop_toBottomOf="@+id/dialog_fragment_textview"
-        app:layout_constraintBottom_toTopOf="@+id/addButton"  />
-
-    <EditText
-        android:id="@+id/cents"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:hint="00"
-        android:selectAllOnFocus="true"
-        android:inputType="number"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintLeft_toRightOf="@+id/decimal"
-        app:layout_constraintTop_toBottomOf="@+id/dialog_fragment_textview"
-        app:layout_constraintBottom_toTopOf="@+id/addButton"
-        />
+        android:imeOptions="actionNext|flagNoExtractUi"/>
 
     <Button
         android:id="@+id/addButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Add this amount"
+        android:text="@string/add_this_amount"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/cents"/>
+        app:layout_constraintTop_toBottomOf="@+id/dollar_cent"/>
 
-   <Button
+    <Button
         android:id="@+id/payOffButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Pay off this amount"
+        android:text="@string/pay_off_this_amount"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/addButton" />
@@ -85,7 +61,7 @@
         android:id="@+id/newTotalButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Set as new total"
+        android:text="@string/set_as_new_total"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/payOffButton"/>

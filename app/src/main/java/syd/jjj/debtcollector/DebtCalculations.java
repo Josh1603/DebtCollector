@@ -16,6 +16,15 @@ public class DebtCalculations {
         this.uICents = uICents;
     }
 
+    public DebtCalculations(String currentDollars, String currentCents, String uIDollarsAndCents){
+
+        //The most recent debt total.
+        this.currentDollars = currentDollars;
+        this.currentCents = currentCents;
+        //The user inputted amount.
+        setUIValues(uIDollarsAndCents);
+    }
+
     private String currentDollars;
     private String currentCents;
     private String uIDollars;
@@ -42,6 +51,37 @@ public class DebtCalculations {
      */
     public String getRemainderText() {
         return remainderText;
+    }
+
+    /**
+     * Sets the UI values when inputted as a single String.
+     * @param uIDollarsAndCents The String value containing the UI dollar-cent value.
+     */
+    public void setUIValues(String uIDollarsAndCents) {
+
+        int dotIndex = uIDollarsAndCents.indexOf(".");
+        int stringLength = uIDollarsAndCents.length();
+
+        if (dotIndex == -1) {
+            uIDollars = uIDollarsAndCents;
+            uICents = "00";
+        } else {
+
+            if (dotIndex == (stringLength - 1)) {
+                uIDollars = uIDollarsAndCents.substring(0, (stringLength - 1));
+                uICents = "00";
+            }
+
+            if (dotIndex == (stringLength - 2)) {
+                uIDollars = uIDollarsAndCents.substring(0, (stringLength - 2));
+                uICents = uIDollarsAndCents.substring(stringLength - 1) + "0";
+            }
+
+            if (dotIndex == (stringLength - 3)) {
+                uIDollars = uIDollarsAndCents.substring(0, (stringLength - 3));
+                uICents = uIDollarsAndCents.substring(stringLength - 2);
+            }
+        }
     }
 
     /**

@@ -1,8 +1,10 @@
 package syd.jjj.debtcollector;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v7.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -18,25 +20,25 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
+import android.widget.Toast;
+
+import java.util.Set;
 
 /**
  * The main activity for this app. Current debt values are stored as shared preferences as a form of
  * basic data persistence. Calculations are delegated to the DebtCalculation class.
  */
 public class DebtCollectorActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, DollarCentInputFragment.DCIF2DCA {
+        implements NavigationView.OnNavigationItemSelectedListener, DollarCentInputFragment.DCIF2DCA, DecimalPointInputFragment.DPIF2DCA {
 
     private TextView currentDebtValue;
     private DebtCalculations debtCalculations;
 
-    private SharedPreferences dollarPrefs;
-    private SharedPreferences centPrefs;
+    private SharedPreferences sharedPreferences;
+    private String sharedPreferenceName = "DebtCollectorSharedPreferences";
 
-    private String currentDollarTotal = "MyCurrentDollarTotal";
-    private String currentCentTotal = "MyCurrentCentTotal";
-
-    private final static String CURRENT_DOLLAR_TOTAL_KEY = "current_dollar_total";
-    private final static String CURRENT_CENT_TOTAL_KEY = "current_cent_total";
+    private final String CURRENT_DOLLAR_TOTAL_KEY = "current_dollar_total";
+    private final String CURRENT_CENT_TOTAL_KEY = "current_cent_total";
 
     /**
      * Displays the current debt value and provides a FAB which displays the DollarCentInputFragment.
@@ -51,16 +53,6 @@ public class DebtCollectorActivity extends AppCompatActivity
         currentDebtValue = findViewById(R.id.current_debt_value);
         displayCurrentDebt();
 
-        FloatingActionButton fab = findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                FragmentManager fm = getSupportFragmentManager();
-                DollarCentInputFragment dm = new DollarCentInputFragment();
-                dm.show(fm, "ui_dollar_cent_fragment");
-            }
-        });
-
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -69,6 +61,32 @@ public class DebtCollectorActivity extends AppCompatActivity
 
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        FloatingActionButton fab = findViewById(R.id.fab);
+
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        Boolean switchPref = sharedPreferences.getBoolean("decimal_point_separator_switch", false);
+
+        if (switchPref) {
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    DollarCentInputFragment dCIF = new DollarCentInputFragment();
+                    dCIF.show(fm, "ui_dollar_cent_fragment");
+                }
+            });
+        } else {
+            fab.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    DecimalPointInputFragment dPIF = new DecimalPointInputFragment();
+                    dPIF.show(fm, "ui_decimal_point_fragment");
+                }
+            });
+        }
     }
 
     @Override
@@ -95,10 +113,12 @@ public class DebtCollectorActivity extends AppCompatActivity
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
+        if(id == R.id.action_settings) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
             return true;
         }
+
         return super.onOptionsItemSelected(item);
     }
 
@@ -107,7 +127,10 @@ public class DebtCollectorActivity extends AppCompatActivity
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // Handle navigation view item clicks here.
         int id = item.getItemId();
+
         if (id == R.id.nav_manage) {
+            Intent intent = new Intent(this, SettingsActivity.class);
+            startActivity(intent);
         }
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
@@ -121,10 +144,7 @@ public class DebtCollectorActivity extends AppCompatActivity
     public void NewDebtValue(String uIDollars, String uICents) {
 
         debtCalculations = new DebtCalculations("0", "00", uIDollars, uICents);
-        debtCalculations.newDebtValue();
-        storeCurrentDollarValue();
-        storeCurrentCentValue();
-        displayCurrentDebt();
+        newDebtValue();
     }
 
     /**
@@ -134,10 +154,7 @@ public class DebtCollectorActivity extends AppCompatActivity
     public void AddDebt (String uIDollars, String uICents){
 
         debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), uIDollars, uICents);
-        debtCalculations.addDebt();
-        storeCurrentDollarValue();
-        storeCurrentCentValue();
-        displayCurrentDebt();
+        addDebt();
     }
 
     /**
@@ -147,17 +164,60 @@ public class DebtCollectorActivity extends AppCompatActivity
     public void PayOffDebt (String uIDollars, String uICents){
 
         debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), uIDollars, uICents);
+        payOffDebt();
+    }
+
+    public void NewDebtValue(String uIDollarCentValue) {
+        debtCalculations = new DebtCalculations("0", "00", uIDollarCentValue);
+        newDebtValue();
+    }
+
+    public void AddDebt(String uIDollarCentValue) {
+        debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), uIDollarCentValue);
+        addDebt();
+    }
+
+    public void PayOffDebt(String uIDollarCentValue) {
+        debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), uIDollarCentValue);
+        payOffDebt();
+    }
+
+    /**
+     * Stores and displays a new debt value.
+     */
+    public void newDebtValue() {
+        debtCalculations.newDebtValue();
+        storeCurrentDollarValue();
+        storeCurrentCentValue();
+        displayCurrentDebt();
+    }
+
+    /**
+     * Adds UI debt value and displays the new total.
+     */
+    public void addDebt() {
+        debtCalculations.addDebt();
+        storeCurrentDollarValue();
+        storeCurrentCentValue();
+        displayCurrentDebt();
+    }
+
+    /**
+     * Pays off UI debt value and displays the new total, including a Snackbar message if debt value
+     * is completely paid off.
+     */
+    public void payOffDebt() {
         debtCalculations.payOffDebt();
         storeCurrentDollarValue();
         storeCurrentCentValue();
         displayCurrentDebt();
-        if (debtCalculations.isPaidOff() && debtCalculations.getRemainderText() == "") {
+        if (debtCalculations.isPaidOff() && debtCalculations.getRemainderText().equals("")) {
             Snackbar debtPaidOffSnackbar = Snackbar.make(findViewById(R.id.main_view), "Woohoo! You've paid off all your debt.", Snackbar.LENGTH_LONG);
             centerAlignSnackbarText(debtPaidOffSnackbar);
             debtPaidOffSnackbar.show();
         }
 
-        if (debtCalculations.isPaidOff() && debtCalculations.getRemainderText() != "") {
+        if (debtCalculations.isPaidOff() && !debtCalculations.getRemainderText().equals("")) {
             Snackbar debtPaidOffSnackbar = Snackbar.make(findViewById(R.id.main_view), "You've paid off your debt and an additional " + debtCalculations.getRemainderText() + "!", Snackbar.LENGTH_LONG);
             centerAlignSnackbarText(debtPaidOffSnackbar);
             debtPaidOffSnackbar.show();
@@ -168,8 +228,8 @@ public class DebtCollectorActivity extends AppCompatActivity
      * Stores the current dollar value to shared preferences.
      */
     public void storeCurrentDollarValue() {
-        dollarPrefs = getSharedPreferences(currentDollarTotal, MODE_PRIVATE);
-        SharedPreferences.Editor editor = dollarPrefs.edit();
+        sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(CURRENT_DOLLAR_TOTAL_KEY, debtCalculations.getCurrentDollars());
         editor.apply();
     }
@@ -178,8 +238,8 @@ public class DebtCollectorActivity extends AppCompatActivity
      * Stores the current cent value to shared preferences.
      */
     public void storeCurrentCentValue() {
-        centPrefs = getSharedPreferences(currentCentTotal, MODE_PRIVATE);
-        SharedPreferences.Editor editor = centPrefs.edit();
+        sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(CURRENT_CENT_TOTAL_KEY, debtCalculations.getCurrentCents());
         editor.apply();
     }
@@ -188,32 +248,31 @@ public class DebtCollectorActivity extends AppCompatActivity
      * Gets the current dollar value from shared preferences.
      */
     public String getCurrentDollarValue() {
-        dollarPrefs = getSharedPreferences(currentDollarTotal, MODE_PRIVATE);
-        return dollarPrefs.getString(CURRENT_DOLLAR_TOTAL_KEY, "0");
+        sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
+        return sharedPreferences.getString(CURRENT_DOLLAR_TOTAL_KEY, "0");
     }
 
     /**
      * Gets the current cent value from shared preferences.
      */
     public String getCurrentCentValue() {
-        centPrefs = getSharedPreferences(currentCentTotal, MODE_PRIVATE);
-        return centPrefs.getString(CURRENT_CENT_TOTAL_KEY, "00");
+        sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
+        return sharedPreferences.getString(CURRENT_CENT_TOTAL_KEY, "00");
     }
 
     /**
      * Displays the current debt value on the UI.
      */
     public void displayCurrentDebt () {
-        dollarPrefs = getSharedPreferences(currentDollarTotal, MODE_PRIVATE);
-        centPrefs = getSharedPreferences(currentCentTotal, MODE_PRIVATE);
-        String total = "$" + dollarPrefs.getString(CURRENT_DOLLAR_TOTAL_KEY, "0")
-                + "." + centPrefs.getString(CURRENT_CENT_TOTAL_KEY, "00");
+        sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
+        String total = "$" + sharedPreferences.getString(CURRENT_DOLLAR_TOTAL_KEY, "0")
+                + "." + sharedPreferences.getString(CURRENT_CENT_TOTAL_KEY, "00");
         currentDebtValue.setText(total);
     }
 
     /**
      * Centrally aligns the text in a given Snackbar.
-     * @param snackbar
+     * @param snackbar The snackbar whose text is to be centrally aligned.
      */
     public void centerAlignSnackbarText(Snackbar snackbar) {
         View view = snackbar.getView();

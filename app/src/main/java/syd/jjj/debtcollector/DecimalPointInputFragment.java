@@ -1,37 +1,31 @@
 package syd.jjj.debtcollector;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
+import android.text.InputFilter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
 
-/**
- * This fragment allows the user to input their debt value and either add to, subtract from or reset
- * the current debt value.
- */
-public class DollarCentInputFragment extends android.support.v4.app.DialogFragment {
+public class DecimalPointInputFragment extends DialogFragment {
+    String uIDollarCent;
+    DPIF2DCA dataPass;
+    EditText dollarCentView;
 
-    String uIDollars;
-    String uICents;
-    DCIF2DCA dataPass;
-    EditText dollarsView;
-    EditText centsView;
 
     /**
      * Assigns references to the EditText views when the the fragment is created.
      */
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.dollar_cent_input_dialog_fragment, container);
-        dollarsView = v.findViewById(R.id.dollars);
-        centsView = v.findViewById(R.id.cents);
+        View v = inflater.inflate(R.layout.decimal_point_input_dialog_fragment, container);
+        dollarCentView = v.findViewById(R.id.dollar_cent);
+        dollarCentView.setFilters(new InputFilter[] {new DecimalDigitsInputFilter(5, 2)});
 
         //Automatically displays the soft input keyboard.
         getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
@@ -46,7 +40,7 @@ public class DollarCentInputFragment extends android.support.v4.app.DialogFragme
     public void onAttach(Context context) {
         super.onAttach(context);
         try {
-            dataPass = (DCIF2DCA) context;
+            dataPass = (DPIF2DCA) context;
         } catch (ClassCastException e) {
             throw new ClassCastException(context.toString()
                     + " must implement DataPass");
@@ -65,9 +59,8 @@ public class DollarCentInputFragment extends android.support.v4.app.DialogFragme
         newTotalButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                uIDollars = dollarsView.getText().toString();
-                uICents = centsView.getText().toString();
-                dataPass.NewDebtValue(uIDollars, uICents);
+                uIDollarCent = dollarCentView.getText().toString();
+                dataPass.NewDebtValue(uIDollarCent);
                 getDialog().dismiss();
             }
         });
@@ -76,9 +69,8 @@ public class DollarCentInputFragment extends android.support.v4.app.DialogFragme
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                uIDollars = dollarsView.getText().toString();
-                uICents = centsView.getText().toString();
-                dataPass.AddDebt(uIDollars, uICents);
+                uIDollarCent = dollarCentView.getText().toString();
+                dataPass.AddDebt(uIDollarCent);
                 getDialog().dismiss();
             }
         });
@@ -87,24 +79,22 @@ public class DollarCentInputFragment extends android.support.v4.app.DialogFragme
         payOffButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                uIDollars = dollarsView.getText().toString();
-                uICents = centsView.getText().toString();
-                dataPass.PayOffDebt(uIDollars, uICents);
+                uIDollarCent = dollarCentView.getText().toString();
+                dataPass.PayOffDebt(uIDollarCent);
                 getDialog().dismiss();
             }
         });
-        }
+    }
 
     /**
      * This inner interface provides the methods which require interaction between the fragment and
      * activity.
      */
-    public interface DCIF2DCA {
-        void NewDebtValue(String uIDollarValue, String uICentValue);
+    public interface DPIF2DCA {
+        void NewDebtValue(String uIDollarCentValue);
 
-        void AddDebt(String uIDollarValue, String uICentValue);
+        void AddDebt(String uIDollarCentValue);
 
-        void PayOffDebt(String uIDollarValue, String uICentValue);
+        void PayOffDebt(String uIDollarCentValue);
     }
-
 }
