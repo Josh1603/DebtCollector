@@ -5,7 +5,7 @@ import android.text.Spanned;
 import android.util.Log;
 
 /**
- * This class should be used in conjunction with a EditText set to decimal input. The filter limits
+ * This class should be used in conjunction with an EditText set to decimal input. The filter limits
  * the amount of characters both before and after the decimal point to their respective specified maxima.
  */
 public class DecimalDigitsInputFilter implements InputFilter {
