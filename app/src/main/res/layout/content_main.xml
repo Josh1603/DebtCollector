@@ -18,7 +18,7 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintBottom_toTopOf="@id/current_debt_value"
         android:textSize="30sp"
-        android:text="Current debt:" />
+        android:text="@string/current_debt" />
 
     <TextView
         android:id="@+id/current_debt_value"
