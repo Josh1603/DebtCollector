@@ -19,10 +19,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import java.util.Set;
 
 /**
  * The main activity for this app. Current debt values are stored as shared preferences as a form of
@@ -64,28 +62,75 @@ public class DebtCollectorActivity extends AppCompatActivity
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        FloatingActionButton fab = findViewById(R.id.fab);
+        Button addButton = findViewById(R.id.addButton);
+        Button payOffButton = findViewById(R.id.payOffButton);
+        Button newTotalButton = findViewById(R.id.newTotalButton);
+        Button undoButton = findViewById(R.id.undoButton);
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         decimalPointIncluded = sharedPreferences.getBoolean("decimal_point_separator_switch", false);
 
         if (decimalPointIncluded) {
-            fab.setOnClickListener(new View.OnClickListener() {
+            addButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     FragmentManager fm = getSupportFragmentManager();
-                    DollarCentInputFragment dCIF = new DollarCentInputFragment();
-                    dCIF.show(fm, "ui_dollar_cent_fragment");
+                    AddToFragmentDCI addFragDCI = new AddToFragmentDCI();
+                    addFragDCI.show(fm, "ui_add_to_DCI_fragment");
+                }
+            });
+            payOffButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    PayOffFragmentDCI payFragDCI = new PayOffFragmentDCI();
+                    payFragDCI.show(fm, "ui_pay_off_DCI_fragment");
+                }
+            });
+            newTotalButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    SetNewFragmentDCI newFragDCI = new SetNewFragmentDCI();
+                    newFragDCI.show(fm, "ui_set_new_DCI_fragment");
+                }
+            });
+            undoButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    //Enter undo method.
                 }
             });
         } else {
-            fab.setOnClickListener(new View.OnClickListener() {
+            addButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
                     FragmentManager fm = getSupportFragmentManager();
-                    DecimalPointInputFragment dPIF = new DecimalPointInputFragment();
-                    dPIF.show(fm, "ui_decimal_point_fragment");
+                    AddToFragmentDPI addFragDPI = new AddToFragmentDPI();
+                    addFragDPI.show(fm, "ui_add_to_DPI_fragment");
+                }
+            });
+            payOffButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    PayOffFragmentDPI payFragDPI = new PayOffFragmentDPI();
+                    payFragDPI.show(fm, "ui_pay_off_DPI_fragment");
+                }
+            });
+            newTotalButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    SetNewFragmentDPI newFragDPI = new SetNewFragmentDPI();
+                    newFragDPI.show(fm, "ui_set_new_DPI_fragment");
+                }
+            });
+            undoButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    //Enter undo method.
                 }
             });
         }
