@@ -29,7 +29,7 @@ import java.util.Set;
  * basic data persistence. Calculations are delegated to the DebtCalculation class.
  */
 public class DebtCollectorActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, DollarCentInputFragment.DCIF2DCA, DecimalPointInputFragment.DPIF2DCA {
+        implements NavigationView.OnNavigationItemSelectedListener, DPIDialogFragmentInterface, DCIDialogFragmentInterface {
 
     private TextView currentDebtValue;
     private DebtCalculations debtCalculations;
@@ -39,6 +39,8 @@ public class DebtCollectorActivity extends AppCompatActivity
 
     private final String CURRENT_DOLLAR_TOTAL_KEY = "current_dollar_total";
     private final String CURRENT_CENT_TOTAL_KEY = "current_cent_total";
+
+    private boolean decimalPointIncluded;
 
     /**
      * Displays the current debt value and provides a FAB which displays the DollarCentInputFragment.
@@ -66,9 +68,9 @@ public class DebtCollectorActivity extends AppCompatActivity
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        Boolean switchPref = sharedPreferences.getBoolean("decimal_point_separator_switch", false);
+        decimalPointIncluded = sharedPreferences.getBoolean("decimal_point_separator_switch", false);
 
-        if (switchPref) {
+        if (decimalPointIncluded) {
             fab.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
@@ -131,6 +133,42 @@ public class DebtCollectorActivity extends AppCompatActivity
         if (id == R.id.nav_manage) {
             Intent intent = new Intent(this, SettingsActivity.class);
             startActivity(intent);
+        }
+
+        if (id == R.id.nav_add_to) {
+            if (decimalPointIncluded) {
+                FragmentManager fm = getSupportFragmentManager();
+                AddToFragmentDCI addFragDCI = new AddToFragmentDCI();
+                addFragDCI.show(fm, "ui_add_to_DCI_fragment");
+            } else {
+                FragmentManager fm = getSupportFragmentManager();
+                AddToFragmentDPI addFragDPI = new AddToFragmentDPI();
+                addFragDPI.show(fm, "ui_add_to_DPI_fragment");
+            }
+        }
+
+        if (id == R.id.nav_pay_off) {
+            if (decimalPointIncluded) {
+                FragmentManager fm = getSupportFragmentManager();
+                PayOffFragmentDCI payFragDCI = new PayOffFragmentDCI();
+                payFragDCI.show(fm, "ui_pay_off_DCI_fragment");
+            } else {
+                FragmentManager fm = getSupportFragmentManager();
+                PayOffFragmentDPI payFragDPI = new PayOffFragmentDPI();
+                payFragDPI.show(fm, "ui_pay_off_DPI_fragment");
+            }
+        }
+
+        if (id == R.id.nav_set_new) {
+            if (decimalPointIncluded) {
+                FragmentManager fm = getSupportFragmentManager();
+                SetNewFragmentDCI newFragDCI = new SetNewFragmentDCI();
+                newFragDCI.show(fm, "ui_set_new_DCI_fragment");
+            } else {
+                FragmentManager fm = getSupportFragmentManager();
+                SetNewFragmentDPI newFragDPI = new SetNewFragmentDPI();
+                newFragDPI.show(fm, "ui_set_new_DPI_fragment");
+            }
         }
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);

@@ -5,7 +5,7 @@ import android.text.Spanned;
 import android.util.Log;
 
 /**
- * This class should be used in conjunction with a EditText set to decimal input. The filter limits
+ * This class should be used in conjunction with an EditText set to decimal input. The filter limits
  * the amount of characters both before and after the decimal point to their respective specified maxima.
  */
 public class DecimalDigitsInputFilter implements InputFilter {
@@ -54,7 +54,7 @@ public class DecimalDigitsInputFilter implements InputFilter {
             return ".";
         }
 
-        // On the condition that the textedit doesn't contain a decimal point:
+        // On the condition that the EditText doesn't contain a decimal point:
         if (!dest.toString().contains(".")) {
 
             // If the text has reached the pre-decimal point limit, and the user input isn't a
@@ -63,7 +63,7 @@ public class DecimalDigitsInputFilter implements InputFilter {
                 return "";
             }
 
-            // Otherwise, if the textedit does contain a decimal point:
+            // Otherwise, if the EditText does contain a decimal point:
         } else {
             int positionOfDecimalPoint = dest.toString().indexOf(".");
             int lastDestIndex = (dest.length() - 1);
