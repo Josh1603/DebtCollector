@@ -13,7 +13,8 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 
-public class DecimalPointInputFragment extends DialogFragment {
+public class PayOffFragmentDPI extends DialogFragment {
+
     String uIDollarCent;
     DPIDialogFragmentInterface dataPass;
     EditText dollarCentView;
@@ -23,7 +24,7 @@ public class DecimalPointInputFragment extends DialogFragment {
      * Assigns references to the EditText views when the the fragment is created.
      */
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.decimal_point_input_dialog_fragment, container);
+        View v = inflater.inflate(R.layout.dpi_pay_off_dialog_fragment, container);
         dollarCentView = v.findViewById(R.id.dollar_cent);
         dollarCentView.setFilters(new InputFilter[] {new DecimalDigitsInputFilter(5, 2)});
 
@@ -55,32 +56,20 @@ public class DecimalPointInputFragment extends DialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Button newTotalButton = view.findViewById(R.id.newTotalButton);
-        newTotalButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                uIDollarCent = dollarCentView.getText().toString();
-                dataPass.NewDebtValue(uIDollarCent);
-                getDialog().dismiss();
-            }
-        });
-
-        Button addButton = view.findViewById(R.id.addButton);
-        addButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                uIDollarCent = dollarCentView.getText().toString();
-                dataPass.AddDebt(uIDollarCent);
-                getDialog().dismiss();
-            }
-        });
-
         Button payOffButton = view.findViewById(R.id.payOffButton);
         payOffButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 uIDollarCent = dollarCentView.getText().toString();
                 dataPass.PayOffDebt(uIDollarCent);
+                getDialog().dismiss();
+            }
+        });
+
+        Button cancelButton = view.findViewById(R.id.cancelButton);
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 getDialog().dismiss();
             }
         });

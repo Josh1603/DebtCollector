@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,11 +12,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.EditText;
 
-/**
- * This fragment allows the user to input their debt value and either add to, subtract from or reset
- * the current debt value.
- */
-public class DollarCentInputFragment extends android.support.v4.app.DialogFragment {
+public class PayOffFragmentDCI extends DialogFragment {
 
     String uIDollars;
     String uICents;
@@ -23,11 +20,12 @@ public class DollarCentInputFragment extends android.support.v4.app.DialogFragme
     EditText dollarsView;
     EditText centsView;
 
+
     /**
      * Assigns references to the EditText views when the the fragment is created.
      */
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.dollar_cent_input_dialog_fragment, container);
+        View v = inflater.inflate(R.layout.dci_pay_off_dialog_fragment, container);
         dollarsView = v.findViewById(R.id.dollars);
         centsView = v.findViewById(R.id.cents);
 
@@ -59,28 +57,6 @@ public class DollarCentInputFragment extends android.support.v4.app.DialogFragme
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Button newTotalButton = view.findViewById(R.id.newTotalButton);
-        newTotalButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                uIDollars = dollarsView.getText().toString();
-                uICents = centsView.getText().toString();
-                dataPass.NewDebtValue(uIDollars, uICents);
-                getDialog().dismiss();
-            }
-        });
-
-        Button addButton = view.findViewById(R.id.addButton);
-        addButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                uIDollars = dollarsView.getText().toString();
-                uICents = centsView.getText().toString();
-                dataPass.AddDebt(uIDollars, uICents);
-                getDialog().dismiss();
-            }
-        });
-
         Button payOffButton = view.findViewById(R.id.payOffButton);
         payOffButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -91,5 +67,13 @@ public class DollarCentInputFragment extends android.support.v4.app.DialogFragme
                 getDialog().dismiss();
             }
         });
-        }
+
+        Button cancelButton = view.findViewById(R.id.cancelButton);
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                getDialog().dismiss();
+            }
+        });
+    }
 }
