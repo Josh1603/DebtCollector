@@ -5,12 +5,15 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.DialogFragment;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
-import android.widget.Button;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
+import android.widget.ImageButton;
+import android.widget.TextView;
 
 public class AddToFragmentDCI extends DialogFragment {
 
@@ -19,6 +22,7 @@ public class AddToFragmentDCI extends DialogFragment {
     DCIDialogFragmentInterface dataPass;
     EditText dollarsView;
     EditText centsView;
+    ImageButton addButton;
 
 
     /**
@@ -57,7 +61,7 @@ public class AddToFragmentDCI extends DialogFragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        Button addButton = view.findViewById(R.id.addButton);
+        addButton = view.findViewById(R.id.addButton);
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -68,7 +72,18 @@ public class AddToFragmentDCI extends DialogFragment {
             }
         });
 
-        Button cancelButton = view.findViewById(R.id.cancelButton);
+        centsView.setOnEditorActionListener(new EditText.OnEditorActionListener() {
+            @Override
+            public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                if (actionId == EditorInfo.IME_ACTION_DONE) {
+                    addButton.performClick();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        ImageButton cancelButton = view.findViewById(R.id.cancelButton);
         cancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
