@@ -10,19 +10,19 @@
             android:title="@string/action_settings" />
         <item
             android:id="@+id/nav_add_to"
-            android:icon="@drawable/ic_launcher_foreground"
+            android:icon="@drawable/ic_add_black_24dp"
             android:title="@string/add_to_debt" />
         <item
             android:id="@+id/nav_pay_off"
-            android:icon="@drawable/ic_launcher_foreground"
+            android:icon="@drawable/ic_remove_black_24dp"
             android:title="@string/pay_off_debt" />
         <item
             android:id="@+id/nav_set_new"
-            android:icon="@drawable/ic_launcher_foreground"
+            android:icon="@drawable/ic_refresh_black_24dp"
             android:title="@string/set_new_total" />
         <item
             android:id="@+id/nav_undo"
-            android:icon="@drawable/ic_launcher_foreground"
+            android:icon="@drawable/ic_undo_black_24dp"
             android:title="@string/undo_last_payment" />
     </group>
 </menu>

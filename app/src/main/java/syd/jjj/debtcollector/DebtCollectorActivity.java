@@ -6,7 +6,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
 import android.support.annotation.NonNull;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
 import android.view.Gravity;
@@ -19,7 +18,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 /**
@@ -62,10 +61,10 @@ public class DebtCollectorActivity extends AppCompatActivity
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        Button addButton = findViewById(R.id.addButton);
-        Button payOffButton = findViewById(R.id.payOffButton);
-        Button newTotalButton = findViewById(R.id.newTotalButton);
-        Button undoButton = findViewById(R.id.undoButton);
+        ImageButton addButton = findViewById(R.id.addButton);
+        ImageButton payOffButton = findViewById(R.id.payOffButton);
+        ImageButton newTotalButton = findViewById(R.id.newTotalButton);
+        ImageButton undoButton = findViewById(R.id.undoButton);
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
