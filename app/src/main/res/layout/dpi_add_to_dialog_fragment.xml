@@ -55,7 +55,7 @@
         android:contentDescription="Add button"
         android:paddingTop="@dimen/image_button_spacer_6dp"
         android:paddingBottom="@dimen/image_button_spacer_6dp"
-        android:src="@drawable/ic_add_black_36dp"
+        android:src="@drawable/ic_done_black_36dp"
         android:text="@string/add_this_amount"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"

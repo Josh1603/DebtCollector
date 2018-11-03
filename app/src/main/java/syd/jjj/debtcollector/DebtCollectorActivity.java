@@ -40,7 +40,8 @@ public class DebtCollectorActivity extends AppCompatActivity
     private boolean decimalPointIncluded;
 
     /**
-     * Displays the current debt value and provides a FAB which displays the DollarCentInputFragment.
+     * Displays the current debt value and provides ImageButtons which open fragments to modify the
+     * debt value, or in the case of the undo button, immediately undoes the last action.
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +71,13 @@ public class DebtCollectorActivity extends AppCompatActivity
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         decimalPointIncluded = sharedPreferences.getBoolean("decimal_point_separator_switch", false);
 
+        undoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                undo();
+            }
+        });
+
         if (decimalPointIncluded) {
             addButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -95,12 +103,6 @@ public class DebtCollectorActivity extends AppCompatActivity
                     newFragDCI.show(fm, "ui_set_new_DCI_fragment");
                 }
             });
-            undoButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    //Enter undo method.
-                }
-            });
         } else {
             addButton.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -124,12 +126,6 @@ public class DebtCollectorActivity extends AppCompatActivity
                     FragmentManager fm = getSupportFragmentManager();
                     SetNewFragmentDPI newFragDPI = new SetNewFragmentDPI();
                     newFragDPI.show(fm, "ui_set_new_DPI_fragment");
-                }
-            });
-            undoButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    //Enter undo method.
                 }
             });
         }
@@ -214,24 +210,29 @@ public class DebtCollectorActivity extends AppCompatActivity
                 newFragDPI.show(fm, "ui_set_new_DPI_fragment");
             }
         }
+
+        if(id == R.id.nav_undo) {
+            undo();
+        }
+
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
 
     /**
-     * Called by the inner interface of DollarCentInputFragment. This method gets the new debt value
-     * and displays it on the UI.
+     * Called by DCIDialogFragmentInterface. This method gets the new debt value and displays it on
+     * the UI.
      */
     public void NewDebtValue(String uIDollars, String uICents) {
 
-        debtCalculations = new DebtCalculations("0", "00", uIDollars, uICents);
+        debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), uIDollars, uICents);
         newDebtValue();
     }
 
     /**
-     * Called by the inner interface of DollarCentInputFragment. This method gets the summed debt value
-     * and displays it on the UI.
+     * Called by DCIDialogFragmentInterface. This method gets the summed debt value and displays it
+     * on the UI.
      */
     public void AddDebt (String uIDollars, String uICents){
 
@@ -240,8 +241,8 @@ public class DebtCollectorActivity extends AppCompatActivity
     }
 
     /**
-     * Called by the inner interface of DollarCentInputFragment. This method gets the paid off debt value
-     * and displays it on the UI.
+     * Called by DCIDialogFragmentInterface. This method gets the paid off debt value and displays
+     * it on the UI.
      */
     public void PayOffDebt (String uIDollars, String uICents){
 
@@ -249,16 +250,28 @@ public class DebtCollectorActivity extends AppCompatActivity
         payOffDebt();
     }
 
+    /**
+     * Called by DPIDialogFragmentInterface. This method gets the new debt value and displays it on
+     * the UI.
+     */
     public void NewDebtValue(String uIDollarCentValue) {
-        debtCalculations = new DebtCalculations("0", "00", uIDollarCentValue);
+        debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), uIDollarCentValue);
         newDebtValue();
     }
 
+    /**
+     * Called by DPIDialogFragmentInterface. This method gets the summed debt value and displays it
+     * on the UI.
+     */
     public void AddDebt(String uIDollarCentValue) {
         debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), uIDollarCentValue);
         addDebt();
     }
 
+    /**
+     * Called by DPIDialogFragmentInterface. This method gets the paid off debt value and displays
+     * it on the UI.
+     */
     public void PayOffDebt(String uIDollarCentValue) {
         debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), uIDollarCentValue);
         payOffDebt();
@@ -303,6 +316,18 @@ public class DebtCollectorActivity extends AppCompatActivity
             Snackbar debtPaidOffSnackbar = Snackbar.make(findViewById(R.id.main_view), "You've paid off your debt and an additional " + debtCalculations.getRemainderText() + "!", Snackbar.LENGTH_LONG);
             centerAlignSnackbarText(debtPaidOffSnackbar);
             debtPaidOffSnackbar.show();
+        }
+    }
+
+    /**
+     * Undoes the previous action.
+     */
+    public void undo() {
+        if (debtCalculations != null) {
+            String previousDollarValue = debtCalculations.getPreviousDollars();
+            String previousCentValue = debtCalculations.getPreviousCents();
+            debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), previousDollarValue, previousCentValue);
+            newDebtValue();
         }
     }
 
