@@ -27,6 +27,8 @@ public class DebtCalculations {
 
     private String currentDollars;
     private String currentCents;
+    private String previousDollars;
+    private String previousCents;
     private String uIDollars;
     private String uICents;
     private String remainderText;
@@ -47,10 +49,26 @@ public class DebtCalculations {
     }
 
     /**
-     * Get remainder text.
+     * Gets remainder text.
      */
     public String getRemainderText() {
         return remainderText;
+    }
+
+    /**
+     * Gets previous dollar value.
+     * @return
+     */
+    public String getPreviousDollars() {
+        return previousDollars;
+    }
+
+    /**
+     * Gets previous cent value.
+     * @return
+     */
+    public String getPreviousCents() {
+        return previousCents;
     }
 
     /**
@@ -91,6 +109,8 @@ public class DebtCalculations {
 
         isPaidOff = false;
         correctZeroValues();
+        previousDollars = currentDollars;
+        previousCents = currentCents;
         currentDollars = uIDollars;
         currentCents = uICents;
     }
@@ -102,6 +122,8 @@ public class DebtCalculations {
 
         isPaidOff = false;
         correctZeroValues();
+        previousDollars = currentDollars;
+        previousCents = currentCents;
         String currentTotal = currentDollars.concat(currentCents);
         String uITotal = uIDollars.concat(uICents);
         int currentTotalInt = Integer.parseInt(currentTotal);
@@ -118,6 +140,8 @@ public class DebtCalculations {
     public void payOffDebt (){
 
         correctZeroValues();
+        previousDollars = currentDollars;
+        previousCents = currentCents;
         String currentTotal = currentDollars.concat(currentCents);
         String uITotal = uIDollars.concat(uICents);
         int currentTotalInt = Integer.parseInt(currentTotal);

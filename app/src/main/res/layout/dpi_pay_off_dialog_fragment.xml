@@ -54,7 +54,7 @@
         android:contentDescription="Pay off Button"
         android:paddingTop="@dimen/image_button_spacer_6dp"
         android:paddingBottom="@dimen/image_button_spacer_6dp"
-        android:src="@drawable/ic_remove_black_36dp"
+        android:src="@drawable/ic_done_black_36dp"
         android:text="@string/pay_off_this_amount"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
