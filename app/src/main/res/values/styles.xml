@@ -1,16 +1,106 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
-        <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/colorPrimary</item>
-        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
-        <item name="colorAccent">@color/colorAccent</item>
+    <!-- Default theme. -->
+    <style name="DefaultAppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:windowAnimationStyle">@style/WindowAnimationTransition</item>
+
+        <item name="colorPrimary">@color/defaultPrimaryColor</item>
+        <item name="colorPrimaryDark">@color/defaultPrimaryDarkColor</item>
+        <item name="background">@color/defaultBackgroundColor</item>
+        <item name="colorAccent">@color/defaultColorAccent</item>
+        <item name="counterTextColor">@color/defaultCounterTextColor</item>
+        <item name="mainImageButtonTint">@color/defaultImageButtonTint</item>
+        <item name="navigationHeaderTextColor">@color/defaultNavigationHeaderTextColor</item>
+        <item name="actionBarIconColor">@color/defaultHeaderIconAndTextColor</item>
+
+
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+    </style>
+
+    <!-- Halloween theme! -->
+    <style name="Halloween" parent="Theme.AppCompat.Light.DarkActionBar">
+        <item name="android:windowAnimationStyle">@style/WindowAnimationTransition</item>
+
+        <item name="colorPrimary">@color/halloweenPrimaryColor</item>
+        <item name="colorPrimaryDark">@color/halloweenPrimaryDarkColor</item>
+        <item name="background">@color/halloweenBackgroundColor</item>
+        <item name="colorAccent">@color/halloweenColorAccent</item>
+        <item name="counterTextColor">@color/halloweenCounterTextColor</item>
+        <item name="mainImageButtonTint">@color/halloweenImageButtonTint</item>
+        <item name="navigationHeaderTextColor">@color/halloweenNavigationHeaderTextColor</item>
+        <item name="actionBarIconColor">@color/halloweenHeaderIconAndTextColor</item>
+
+        <item name="titleTextColor">@color/halloweenHeaderIconAndTextColor</item>
+        <item name="android:windowBackground">@color/halloweenWindowBackgroundColor</item>
+        <item name="android:textColor">@color/halloweenTextColor</item>
+        <item name="android:textColorPrimary">@color/halloweenPrimaryTextColor</item>
+        <item name="android:textColorSecondary">@color/halloweenSecondaryTextColor</item>
+
+        <item name="actionOverflowButtonStyle">@style/halloweenOverflowButtonStyle</item>
+        <item name="actionBarTheme">@style/halloweenDrawerArrowToggleStyle</item>
+        <item name="drawerArrowStyle">@style/halloweenDrawerArrowStyle</item>
+
+        <item name="android:windowLightStatusBar" tools:targetApi="23">true</item><!--Sets status bar icons to darker color for all activities (except DebtCollectorActivity) -->
+
         <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
 
     </style>
 
-    <style name="AppTheme.NoActionBar">
+    <style name="halloweenOverflowButtonStyle" parent="@style/Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:tint">@color/halloweenHeaderIconAndTextColor</item>
+    </style>
+
+    <style name="halloweenDrawerArrowToggleStyle" parent="@style/ThemeOverlay.AppCompat.ActionBar">
+        <item name="colorControlNormal">@color/halloweenHeaderIconAndTextColor</item>
+    </style>
+
+    <style name="halloweenDrawerArrowStyle" parent="@style/Widget.AppCompat.DrawerArrowToggle">
+        <item name="spinBars">true</item>
+        <item name="color">@color/halloweenHeaderIconAndTextColor</item>
+    </style>
+
+    <!-- Millenial theme! -->
+    <style name="RosesTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        
+        <item name="android:windowAnimationStyle">@style/WindowAnimationTransition</item>
+
+        <item name="colorPrimary">@color/millenialPrimaryColor</item>
+        <item name="colorPrimaryDark">@color/millenialPrimaryDarkColor</item>
+        <item name="background">@color/millenialBackgroundColor</item>
+        <item name="colorAccent">@color/millenialColorAccent</item>
+        <item name="counterTextColor">@color/millenialCounterTextColor</item>
+        <item name="mainImageButtonTint">@color/millenialImageButtonTint</item>
+        <item name="navigationHeaderTextColor">@color/millenialNavigationHeaderTextColor</item>
+        <item name="actionBarIconColor">@color/millenialHeaderIconAndTextColor</item>
+
+        <item name="titleTextColor">@color/millenialHeaderIconAndTextColor</item>
+        <item name="android:windowBackground">@color/millenialWindowBackgroundColor</item>
+        <item name="android:textColor">@color/millenialTextColor</item>
+        <item name="android:textColorPrimary">@color/millenialPrimaryTextColor</item>
+        <item name="android:textColorSecondary">@color/millenialSecondaryTextColor</item>
+
+        <item name="actionOverflowButtonStyle">@style/millenialOverflowButtonStyle</item>
+        <item name="actionBarTheme">@style/millenialDrawerArrowToggleStyle</item>
+        <item name="drawerArrowStyle">@style/millenialDrawerArrowStyle</item>
+        
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay</item>
+    </style>
+
+    <style name="millenialOverflowButtonStyle" parent="@style/Widget.AppCompat.ActionButton.Overflow">
+        <item name="android:tint">@color/millenialHeaderIconAndTextColor</item>
+    </style>
+
+    <style name="millenialDrawerArrowToggleStyle" parent="@style/ThemeOverlay.AppCompat.ActionBar">
+        <item name="colorControlNormal">@color/millenialHeaderIconAndTextColor</item>
+    </style>
+
+    <style name="millenialDrawerArrowStyle" parent="@style/Widget.AppCompat.DrawerArrowToggle">
+        <item name="spinBars">true</item>
+        <item name="color">@color/millenialHeaderIconAndTextColor</item>
+    </style>
+
+
+    <style name="DefaultAppTheme.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
     </style>
@@ -18,5 +108,10 @@
     <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+
+    <style name="WindowAnimationTransition">
+        <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:windowExitAnimation">@android:anim/fade_out</item>
+    </style>
 
 </resources>

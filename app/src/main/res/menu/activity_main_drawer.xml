@@ -6,7 +6,7 @@
     <group android:checkableBehavior="single">
         <item
             android:id="@+id/nav_manage"
-            android:icon="@drawable/ic_menu_manage"
+            android:icon="@drawable/ic_settings_nav_24dp"
             android:title="@string/action_settings" />
         <item
             android:id="@+id/nav_add_to"
