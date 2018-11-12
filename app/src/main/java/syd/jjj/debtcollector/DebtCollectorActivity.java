@@ -2,6 +2,7 @@ package syd.jjj.debtcollector;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
@@ -39,12 +40,37 @@ public class DebtCollectorActivity extends AppCompatActivity
 
     private boolean decimalPointIncluded;
 
+    private String currentTheme;
+
     /**
      * Displays the current debt value and provides ImageButtons which open fragments to modify the
      * debt value, or in the case of the undo button, immediately undoes the last action.
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        currentTheme = sharedPreferences.getString("theme_settings_list", "defaultTheme");
+
+        if(currentTheme.equals("defaultTheme")){
+            setTheme(R.style.DefaultAppTheme);
+        }
+
+        if(currentTheme.equals("halloweenTheme")){
+            setTheme(R.style.Halloween);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+                // Sets status bar icons to black on the main activity.
+                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN|View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            }
+        }
+
+        if(currentTheme.equals("rosesTheme")){
+            setTheme(R.style.RosesTheme);
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -129,7 +155,7 @@ public class DebtCollectorActivity extends AppCompatActivity
                 }
             });
         }
-    }
+        }
 
     @Override
     public void onBackPressed() {
@@ -388,6 +414,16 @@ public class DebtCollectorActivity extends AppCompatActivity
             textView.setTextAlignment(View.TEXT_ALIGNMENT_CENTER);
         } else {
             textView.setGravity(Gravity.CENTER_HORIZONTAL);
+        }
+    }
+
+    public void setTheme(int resid) {
+        super.setTheme(resid);
+        Toolbar actionToolBar = findViewById(R.id.toolbar);
+        if (actionToolBar != null) {
+            //actionToolBar.setBackgroundColor();
+            //Set shared preferences for the background colour
+            //Do the same for the Navigation Header
         }
     }
 
