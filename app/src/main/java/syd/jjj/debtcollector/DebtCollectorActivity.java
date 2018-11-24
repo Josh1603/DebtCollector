@@ -2,9 +2,13 @@ package syd.jjj.debtcollector;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentStatePagerAdapter;
+import android.support.v4.view.PagerAdapter;
+import android.support.v4.view.ViewPager;
 import android.support.v7.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -22,12 +26,13 @@ import android.view.MenuItem;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
+
 /**
  * The main activity for this app. Current debt values are stored as shared preferences as a form of
  * basic data persistence. Calculations are delegated to the DebtCalculation class.
  */
 public class DebtCollectorActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, DPIDialogFragmentInterface, DCIDialogFragmentInterface {
+        implements NavigationView.OnNavigationItemSelectedListener, DPIDialogFragmentInterface, DCIDialogFragmentInterface, ViewPagerParentFragment.OnFragmentInteractionListener {
 
     private TextView currentDebtValue;
     private DebtCalculations debtCalculations;
@@ -41,6 +46,26 @@ public class DebtCollectorActivity extends AppCompatActivity
     private boolean decimalPointIncluded;
 
     private String currentTheme;
+
+    //***************************
+    /**
+     * Number of fragments.
+     */
+
+    private static final int NUM_PAGES = 3;
+
+    /**
+     * Handles the animation when transitioning between fragments.
+     */
+
+    private ViewPager mPager;
+
+    /**
+     * Provides the pages to the pager widget.
+     */
+
+    private PagerAdapter mPagerAdapter;
+    //*****************************
 
     /**
      * Displays the current debt value and provides ImageButtons which open fragments to modify the
@@ -108,9 +133,14 @@ public class DebtCollectorActivity extends AppCompatActivity
             addButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    FragmentManager fm = getSupportFragmentManager();
-                    AddToFragmentDCI addFragDCI = new AddToFragmentDCI();
-                    addFragDCI.show(fm, "ui_add_to_DCI_fragment");
+                    //FragmentManager fm = getSupportFragmentManager();
+                    //AddToFragmentDCI addFragDCI = new AddToFragmentDCI();
+                    //addFragDCI.show(fm, "ui_add_to_DCI_fragment");
+
+                    mPager = findViewById(R.id.pager);
+                    mPagerAdapter = new SliderPagerAdapter(getSupportFragmentManager());
+                    mPager.setAdapter(mPagerAdapter);
+
                 }
             });
             payOffButton.setOnClickListener(new View.OnClickListener() {
@@ -156,6 +186,48 @@ public class DebtCollectorActivity extends AppCompatActivity
             });
         }
         }
+
+    @Override
+    public void onFragmentInteraction(Uri uri) {
+
+    }
+
+    //****************************
+    /**
+     * A simple pager adapter which represents the DCI fragments.
+     */
+
+    private class SliderPagerAdapter extends FragmentStatePagerAdapter {
+        public SliderPagerAdapter(FragmentManager fm) {
+            super(fm);
+        }
+
+        @Override
+        public Fragment getItem(int i) {
+            ViewPagerParentFragment vPPF = new ViewPagerParentFragment();
+            if (i == 0) {
+
+                Bundle b = new Bundle();
+                b.putString("param1", "1");
+                vPPF.setArguments(b);
+                return vPPF;
+            }
+            if (i == 1) {
+                return new PayOffFragmentDCI();
+            }
+            if (i == 2) {
+                return new SetNewFragmentDCI();
+            }
+
+            return null;
+        }
+
+        @Override
+        public int getCount() {
+            return NUM_PAGES;
+        }
+    }
+    //****************************
 
     @Override
     public void onBackPressed() {
