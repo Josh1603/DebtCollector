@@ -34,7 +34,7 @@ public class PayOffFragmentDCI extends DialogFragment {
         centsView = v.findViewById(R.id.cents);
 
         //Automatically displays the soft input keyboard.
-            //getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+            getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
 
         return v;
     }

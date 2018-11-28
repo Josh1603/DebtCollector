@@ -6,8 +6,8 @@
     android:id="@+id/add_to_layout"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:background="@android:color/holo_red_light"
     android:layout_gravity="center">
+    <!-- Use to modify fragment background //android:background="@android:color/holo_red_light" -->
 
     <TextView
         android:id="@+id/add_message"
