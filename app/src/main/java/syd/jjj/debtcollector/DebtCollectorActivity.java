@@ -40,9 +40,6 @@ public class DebtCollectorActivity extends AppCompatActivity
 
     private boolean decimalPointIncluded;
 
-    private String currentTheme;
-
-
     /**
      * Displays the current debt value and provides ImageButtons which open fragments to modify the
      * debt value, or in the case of the undo button, immediately undoes the last action.
@@ -50,35 +47,15 @@ public class DebtCollectorActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-        currentTheme = sharedPreferences.getString("theme_settings_list", "defaultTheme");
-
-        if(currentTheme.equals("defaultTheme")){
-            setTheme(R.style.DefaultAppTheme);
-        }
-
-        if(currentTheme.equals("halloweenTheme")){
-            setTheme(R.style.Halloween);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-
-                // Sets status bar icons to black on the main activity.
-                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN|View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
-            }
-        }
-
-        if(currentTheme.equals("rosesTheme")){
-            setTheme(R.style.RosesTheme);
-        }
-
         super.onCreate(savedInstanceState);
+        initialiseTheme();
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
         currentDebtValue = findViewById(R.id.current_debt_value);
         displayCurrentDebt();
+        setButtonListeners();
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -89,73 +66,6 @@ public class DebtCollectorActivity extends AppCompatActivity
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        ImageButton addButton = findViewById(R.id.addButton);
-        ImageButton payOffButton = findViewById(R.id.payOffButton);
-        ImageButton newTotalButton = findViewById(R.id.newTotalButton);
-        ImageButton undoButton = findViewById(R.id.undoButton);
-
-        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
-        decimalPointIncluded = sharedPreferences.getBoolean("decimal_point_separator_switch", false);
-
-        undoButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                undo();
-            }
-        });
-
-        if (decimalPointIncluded) {
-            addButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    FragmentManager fm = getSupportFragmentManager();
-                    AddToFragmentDCI addFragDCI = new AddToFragmentDCI();
-                    addFragDCI.show(fm, "ui_add_to_DCI_fragment");
-                }
-            });
-            payOffButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    FragmentManager fm = getSupportFragmentManager();
-                    PayOffFragmentDCI payFragDCI = new PayOffFragmentDCI();
-                    payFragDCI.show(fm, "ui_pay_off_DCI_fragment");
-                }
-            });
-            newTotalButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    FragmentManager fm = getSupportFragmentManager();
-                    SetNewFragmentDCI newFragDCI = new SetNewFragmentDCI();
-                    newFragDCI.show(fm, "ui_set_new_DCI_fragment");
-                }
-            });
-        } else {
-            addButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    FragmentManager fm = getSupportFragmentManager();
-                    AddToFragmentDPI addFragDPI = new AddToFragmentDPI();
-                    addFragDPI.show(fm, "ui_add_to_DPI_fragment");
-                }
-            });
-            payOffButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    FragmentManager fm = getSupportFragmentManager();
-                    PayOffFragmentDPI payFragDPI = new PayOffFragmentDPI();
-                    payFragDPI.show(fm, "ui_pay_off_DPI_fragment");
-                }
-            });
-            newTotalButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    FragmentManager fm = getSupportFragmentManager();
-                    SetNewFragmentDPI newFragDPI = new SetNewFragmentDPI();
-                    newFragDPI.show(fm, "ui_set_new_DPI_fragment");
-                }
-            });
-        }
         }
 
     @Override
@@ -408,6 +318,7 @@ public class DebtCollectorActivity extends AppCompatActivity
         }
     }
 
+
     public void setTheme(int resid) {
         super.setTheme(resid);
         Toolbar actionToolBar = findViewById(R.id.toolbar);
@@ -415,6 +326,100 @@ public class DebtCollectorActivity extends AppCompatActivity
             //actionToolBar.setBackgroundColor();
             //Set shared preferences for the background colour
             //Do the same for the Navigation Header
+        }
+    }
+
+    public void initialiseTheme() {
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+
+        String currentTheme = sharedPreferences.getString("theme_settings_list", "defaultTheme");
+
+        if(currentTheme.equals("defaultTheme")){
+            setTheme(R.style.DefaultAppTheme);
+        }
+
+        if(currentTheme.equals("halloweenTheme")){
+            setTheme(R.style.Halloween);
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+
+                // Sets status bar icons to black on the main activity.
+                getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN|View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
+            }
+        }
+
+        if(currentTheme.equals("rosesTheme")){
+            setTheme(R.style.RosesTheme);
+        }
+    }
+
+    private void setButtonListeners() {
+        ImageButton addButton = findViewById(R.id.addButton);
+        ImageButton payOffButton = findViewById(R.id.payOffButton);
+        ImageButton newTotalButton = findViewById(R.id.newTotalButton);
+        ImageButton undoButton = findViewById(R.id.undoButton);
+
+        PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
+        sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        decimalPointIncluded = sharedPreferences.getBoolean("decimal_point_separator_switch", false);
+
+        undoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                undo();
+            }
+        });
+
+        if (decimalPointIncluded) {
+            addButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    AddToFragmentDCI addFragDCI = new AddToFragmentDCI();
+                    addFragDCI.show(fm, "ui_add_to_DCI_fragment");
+                }
+            });
+            payOffButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    PayOffFragmentDCI payFragDCI = new PayOffFragmentDCI();
+                    payFragDCI.show(fm, "ui_pay_off_DCI_fragment");
+                }
+            });
+            newTotalButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    SetNewFragmentDCI newFragDCI = new SetNewFragmentDCI();
+                    newFragDCI.show(fm, "ui_set_new_DCI_fragment");
+                }
+            });
+        } else {
+            addButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    AddToFragmentDPI addFragDPI = new AddToFragmentDPI();
+                    addFragDPI.show(fm, "ui_add_to_DPI_fragment");
+                }
+            });
+            payOffButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    PayOffFragmentDPI payFragDPI = new PayOffFragmentDPI();
+                    payFragDPI.show(fm, "ui_pay_off_DPI_fragment");
+                }
+            });
+            newTotalButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View view) {
+                    FragmentManager fm = getSupportFragmentManager();
+                    SetNewFragmentDPI newFragDPI = new SetNewFragmentDPI();
+                    newFragDPI.show(fm, "ui_set_new_DPI_fragment");
+                }
+            });
         }
     }
 
