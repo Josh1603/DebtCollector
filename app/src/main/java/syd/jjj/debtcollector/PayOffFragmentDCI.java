@@ -29,12 +29,12 @@ public class PayOffFragmentDCI extends DialogFragment {
      * Assigns references to the EditText views when the the fragment is created.
      */
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        View v = inflater.inflate(R.layout.dci_pay_off_dialog_fragment, container);
+        View v = inflater.inflate(R.layout.dci_pay_off_dialog_fragment, container, false);
         dollarsView = v.findViewById(R.id.dollars);
         centsView = v.findViewById(R.id.cents);
 
         //Automatically displays the soft input keyboard.
-        getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
+            getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE);
 
         return v;
     }

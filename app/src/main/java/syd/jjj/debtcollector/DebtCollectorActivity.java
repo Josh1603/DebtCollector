@@ -2,7 +2,6 @@ package syd.jjj.debtcollector;
 
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.graphics.Color;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.preference.PreferenceManager;
@@ -21,6 +20,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
 
 /**
  * The main activity for this app. Current debt values are stored as shared preferences as a form of
@@ -41,6 +41,7 @@ public class DebtCollectorActivity extends AppCompatActivity
     private boolean decimalPointIncluded;
 
     private String currentTheme;
+
 
     /**
      * Displays the current debt value and provides ImageButtons which open fragments to modify the
@@ -156,16 +157,6 @@ public class DebtCollectorActivity extends AppCompatActivity
             });
         }
         }
-
-    @Override
-    public void onBackPressed() {
-        DrawerLayout drawer = findViewById(R.id.drawer_layout);
-        if (drawer.isDrawerOpen(GravityCompat.START)) {
-            drawer.closeDrawer(GravityCompat.START);
-        } else {
-            super.onBackPressed();
-        }
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
