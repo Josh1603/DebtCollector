@@ -374,9 +374,11 @@ public class DebtCollectorActivity extends AppCompatActivity
             addButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    FragmentManager fm = getSupportFragmentManager();
-                    AddToFragmentDCI addFragDCI = new AddToFragmentDCI();
-                    addFragDCI.show(fm, "ui_add_to_DCI_fragment");
+                    //FragmentManager fm = getSupportFragmentManager();
+                    //AddToFragmentDCI addFragDCI = new AddToFragmentDCI();
+                    //addFragDCI.show(fm, "ui_add_to_DCI_fragment");
+
+                    new MyDialogFragmentPager().show(getSupportFragmentManager(), "dialog_pager");
                 }
             });
             payOffButton.setOnClickListener(new View.OnClickListener() {

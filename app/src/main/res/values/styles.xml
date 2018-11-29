@@ -105,4 +105,14 @@
 
     <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
 
+    <style name="Dialog.Pager" parent = "DefaultAppTheme">
+        <item name="android:windowBackground">@color/scrimColor</item>
+        <item name="android:windowAnimationStyle">@style/Animation.Dialog.Fade</item>
+    </style>
+
+    <style name="Animation.Dialog.Fade" parent="@android:style/Animation.Dialog">
+        <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:windowExitAnimation">@android:anim/fade_out</item>
+    </style>
+
 </resources>
