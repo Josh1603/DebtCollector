@@ -378,7 +378,7 @@ public class DebtCollectorActivity extends AppCompatActivity
                     //AddToFragmentDCI addFragDCI = new AddToFragmentDCI();
                     //addFragDCI.show(fm, "ui_add_to_DCI_fragment");
 
-                    new MyDialogFragmentPager().show(getSupportFragmentManager(), "dialog_pager");
+                    new MySwipeableDialogFragments().show(getSupportFragmentManager(), "dialog_pager");
                 }
             });
             payOffButton.setOnClickListener(new View.OnClickListener() {

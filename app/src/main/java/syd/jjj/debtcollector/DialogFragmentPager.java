@@ -1,116 +1,66 @@
 package syd.jjj.debtcollector;
 
-import android.app.Dialog;
-import android.content.res.Configuration;
-import android.os.Build;
-import android.os.Bundle;
-import android.support.annotation.NonNull;
+import android.content.Context;
 import android.support.v4.view.ViewPager;
-import android.support.v7.app.AppCompatDialog;
-import android.support.v7.app.AppCompatDialogFragment;
-import android.view.LayoutInflater;
+import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
 
-public abstract class DialogFragmentPager extends AppCompatDialogFragment {
+public class DialogFragmentPager extends ViewPager {
 
-    private final DialogFragmentPagerAdapter.Callback adapterCallback =
-            new DialogFragmentPagerAdapter.Callback() {
-        @Override
-                public View getPageView(int position, ViewGroup parent) {
-            return DialogFragmentPager.this.getPageView(inflater, position, parent);
-        }
+    private static final int DEFAULT_OFFSCREEN_PAGES = 2;
 
-        @Override
-                public int getPageCount() {
-            return DialogFragmentPager.this.getPageCount();
-        }
-            };
+    public interface OnOutsideTouchListener {
+        void onOutsideTouch(int position);
+    }
 
-    private final TouchyViewPager.OnOutsideTouchListener outsideTouchListener =
-            new TouchyViewPager.OnOutsideTouchListener() {
-        @Override
-                public void onOutsideTouch(int currentPosition) {
-            dismiss();
-            DialogFragmentPager.this.onOutsideTouchDismissed(currentPosition);
-        }
-            };
+    private OnOutsideTouchListener outsideTouchListener;
 
-    private final ViewPager.OnPageChangeListener pageChangeListener =
-            new ViewPager.OnPageChangeListener() {
-                @Override
-                public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
-                    DialogFragmentPager.this.onPageScrolled(position, positionOffset, positionOffsetPixels);
-                }
+    public DialogFragmentPager(Context context, AttributeSet attrs) {
+        super(context, attrs);
+        setOffscreenPageLimit(DEFAULT_OFFSCREEN_PAGES);
+    }
 
-                @Override
-                public void onPageSelected(int position) {
-                    DialogFragmentPager.this.onPageSelected(position);
-                }
+    public void setOnOutsideTouchListener(OnOutsideTouchListener outsideTouchListener) {
+        this.outsideTouchListener = outsideTouchListener;
+    }
 
-                @Override
-                public void onPageScrollStateChanged(int state) {
-                    DialogFragmentPager.this.onPageScrollStateChanged(state);
-                }
-            };
-
-    private DialogFragmentPagerAdapter adapter;
-    private LayoutInflater inflater;
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setStyle(STYLE_NO_TITLE, R.style.Dialog_Pager);
+    public void addHolderView(View child, int position) {
+        child.setTag(R.id.touchy_view_pager_index, position);
+        addView(child);
     }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        this.inflater = inflater;
-        return inflater.inflate(R.layout.dialog_pager, container, false);
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, Bundle savedInstanceState) {
-        final TouchyViewPager viewPager = view.findViewById(R.id.view_pager);
-        adapter = new DialogFragmentPagerAdapter (getContext(), adapterCallback);
-        viewPager.setAdapter(adapter);
-        viewPager.addOnPageChangeListener(pageChangeListener);
-        viewPager.setOnOutsideTouchListener(outsideTouchListener);
-    }
-
-    @NonNull
-    @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-        final AppCompatDialog dialog = (AppCompatDialog) super.onCreateDialog(savedInstanceState);
-
-        final Window window = dialog.getWindow();
-        if(window != null) {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
-                window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+    public boolean onInterceptTouchEvent(MotionEvent event) {
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            final int currentItem = getCurrentItem();
+            final ViewGroup holder = findHolderByPosition(currentItem);
+            if (holder != null) {
+                final View pageView = holder.getChildAt(0);
+                if (pageView != null) {
+                    final int x = (int) event.getX();
+                    final int y = (int) event.getY();
+                    if (x < pageView.getLeft() || x > pageView.getRight()
+                            || y < pageView.getTop() || y > pageView.getBottom()) {
+                        outsideTouchListener.onOutsideTouch(currentItem);
+                    }
+                }
             }
-            window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
         }
-        return dialog;
+        return super.onInterceptTouchEvent(event);
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        adapter.onConfigurationChanged();
+    private ViewGroup findHolderByPosition(int position) {
+        final int childCount = getChildCount();
+        for (int i = 0; i < childCount; ++i) {
+            final View child = getChildAt(i);
+            final int tag = (int) child.getTag(R.id.touchy_view_pager_index);
+            if (tag == position) {
+                return (ViewGroup) child;
+            }
+        }
+        return null;
     }
 
-    protected abstract View getPageView(@NonNull LayoutInflater inflater, int position, @NonNull ViewGroup parent);
-
-    protected abstract int getPageCount();
-
-    protected void onPageSelected(int position) {}
-
-    protected void onPageScrollStateChanged(int state) {}
-
-    protected void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
-
-    protected void onOutsideTouchDismissed(int currentPosition) {}
 }

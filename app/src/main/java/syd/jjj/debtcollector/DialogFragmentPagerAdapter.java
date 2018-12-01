@@ -1,6 +1,8 @@
 package syd.jjj.debtcollector;
 
+import android.animation.LayoutTransition;
 import android.content.Context;
+import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.v4.view.PagerAdapter;
 import android.view.Gravity;
@@ -26,7 +28,8 @@ public class DialogFragmentPagerAdapter extends PagerAdapter {
     @NonNull
     @Override
     public Object instantiateItem(@NonNull ViewGroup container, int position) {
-        final TouchyViewPager viewPager = (TouchyViewPager) container;
+
+        final DialogFragmentPager viewPager = (DialogFragmentPager) container;
         final FrameLayout holder = new FrameLayout(context);
         final View pageView = callback.getPageView(position, container);
         holder.addView(pageView);
@@ -36,6 +39,7 @@ public class DialogFragmentPagerAdapter extends PagerAdapter {
         pageViewLayoutParams.gravity = Gravity.CENTER;
 
         viewPager.addHolderView(holder, position);
+
         final ViewGroup.LayoutParams holderLayoutParams = holder.getLayoutParams();
         holderLayoutParams.width = ViewGroup.LayoutParams.MATCH_PARENT;
         holderLayoutParams.height = ViewGroup.LayoutParams.MATCH_PARENT;
