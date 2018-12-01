@@ -13,7 +13,7 @@ public class MySwipeableDialogFragments extends SwipeableDialogFragments {
 
     @Override
     protected View getPageView (@NonNull LayoutInflater inflater, int position, @NonNull ViewGroup parent) {
-        
+
         switch(position) {
             case(0):
                 final View v0 = inflater.inflate(R.layout.dci_view, parent, false);
