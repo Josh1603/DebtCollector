@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.HandlerThread;
 import android.support.v7.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -20,6 +21,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
+import java.util.Date;
 
 
 /**
@@ -40,6 +43,9 @@ public class DebtCollectorActivity extends AppCompatActivity
 
     private boolean decimalPointIncluded;
 
+    private DebtValueDatabase debtValueDatabase;
+    private DebtValue currentDebtValueObj;
+
     /**
      * Displays the current debt value and provides ImageButtons which open fragments to modify the
      * debt value, or in the case of the undo button, immediately undoes the last action.
@@ -56,6 +62,8 @@ public class DebtCollectorActivity extends AppCompatActivity
         currentDebtValue = findViewById(R.id.current_debt_value);
         displayCurrentDebt();
         setButtonListeners();
+
+        debtValueDatabase = DebtValueDatabaseAccessor.getInstance(getApplicationContext());
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -211,6 +219,17 @@ public class DebtCollectorActivity extends AppCompatActivity
         debtCalculations.newDebtValue();
         storeCurrentDollarValue();
         storeCurrentCentValue();
+        storeData();
+        displayCurrentDebt();
+    }
+
+    /**
+     * Stores and displays a new debt value without storing it to the Room database.
+     */
+    public void newDebtValueNoStore() {
+        debtCalculations.newDebtValue();
+        storeCurrentDollarValue();
+        storeCurrentCentValue();
         displayCurrentDebt();
     }
 
@@ -221,6 +240,7 @@ public class DebtCollectorActivity extends AppCompatActivity
         debtCalculations.addDebt();
         storeCurrentDollarValue();
         storeCurrentCentValue();
+        storeData();
         displayCurrentDebt();
     }
 
@@ -232,6 +252,7 @@ public class DebtCollectorActivity extends AppCompatActivity
         debtCalculations.payOffDebt();
         storeCurrentDollarValue();
         storeCurrentCentValue();
+        storeData();
         displayCurrentDebt();
         if (debtCalculations.isPaidOff() && debtCalculations.getRemainderText().equals("")) {
             Snackbar debtPaidOffSnackbar = Snackbar.make(findViewById(R.id.main_view), "Woohoo! You've paid off all your debt.", Snackbar.LENGTH_LONG);
@@ -253,8 +274,13 @@ public class DebtCollectorActivity extends AppCompatActivity
         if (debtCalculations != null) {
             String previousDollarValue = debtCalculations.getPreviousDollars();
             String previousCentValue = debtCalculations.getPreviousCents();
-            debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), previousDollarValue, previousCentValue);
-            newDebtValue();
+            debtCalculations = new DebtCalculations(
+                    getCurrentDollarValue(),
+                    getCurrentCentValue(),
+                    previousDollarValue,
+                    previousCentValue);
+            adjustMostRecentDebtValue();
+            newDebtValueNoStore();
         }
     }
 
@@ -276,6 +302,27 @@ public class DebtCollectorActivity extends AppCompatActivity
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(CURRENT_CENT_TOTAL_KEY, debtCalculations.getCurrentCents());
         editor.apply();
+    }
+
+    /**
+     * Stores current debt value to a Room database.
+     */
+    public void storeData() {
+        currentDebtValueObj = new DebtValue(new Date(), getCurrentDollarValue(), getCurrentCentValue());
+        debtValueDatabase.debtValueDAO().insertDebtValue(currentDebtValueObj);
+    }
+
+    /**
+     * Adds or removes most recent debt value from the Room database depending on whether it was an
+     * undo or a 'double' undo.
+     */
+    public void adjustMostRecentDebtValue() {
+        if (currentDebtValueObj != null) {
+            debtValueDatabase.debtValueDAO().deleteDebtValue(currentDebtValueObj);
+            currentDebtValueObj = null;
+        } else {
+            storeData();
+        }
     }
 
     /**
