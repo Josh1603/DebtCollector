@@ -13,20 +13,23 @@ import java.util.List;
 @Dao
 public interface DebtValueDAO {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    public void insertDebtValues(List<DebtValue> debtValues);
+    void insertDebtValues(List<DebtValue> debtValues);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    public void insertDebtValue(DebtValue debtValue);
+    void insertDebtValue(DebtValue debtValue);
 
     @Delete
-    public void deleteDebtValue(DebtValue debtValue);
+    void deleteDebtValue(DebtValue debtValue);
 
 
     // TODO ***CHECK WHETHER THIS WORKS. IF NOT REMOVE DATETIME AND CHANGE TO ORDER BY mDate.***
     @Query("SELECT * FROM debtvalue ORDER BY datetime(mDate) DESC")
-    public LiveData<List<DebtValue>> allDebtValues();
+    List<DebtValue> allDebtValues();
 
     @Query("SELECT * FROM debtvalue WHERE mDate =:date")
-    LiveData<DebtValue> getDebtValue(Date date);
+    DebtValue getDebtValue(Date date);
+
+    @Query("SELECT * FROM debtvalue WHERE mDate BETWEEN :dateStart AND :dateEnd")
+    List<DebtValue> getDebtValuesBetween(Date dateStart, Date dateEnd);
 }
 

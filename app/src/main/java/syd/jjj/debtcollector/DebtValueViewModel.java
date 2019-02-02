@@ -15,20 +15,16 @@ import syd.jjj.debtcollector.DebtValueDatabaseAccessor;
 public class DebtValueViewModel extends AndroidViewModel {
     private static final String TAG = "DebtValueUpdate";
 
-    private LiveData<List<DebtValue>> debtValues;
+    private List<DebtValue> debtValues;
 
     public DebtValueViewModel(Application application) {
         super(application);
     }
 
-    public LiveData<List<DebtValue>> getDebtValues() {
+    public List<DebtValue> getDebtValues() {
         if(debtValues == null) {
             // Load debt values from the database.
-            debtValues =
-                    DebtValueDatabaseAccessor
-                            .getInstance(getApplication())
-                            .debtValueDAO()
-                            .allDebtValues();
+            //debtValues = DebtValueDatabaseAccessor.allDebtValues();
         }
         return debtValues;
     }
