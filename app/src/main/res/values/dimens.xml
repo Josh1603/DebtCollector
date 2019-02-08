@@ -8,4 +8,5 @@
     <dimen name="imageButtonSpacer">8dp</dimen>
     <dimen name="image_button_spacer_6dp">6dp</dimen>
     <dimen name="image_button_spacer_2dp">2dp</dimen>
+    <dimen name="button_radius_large">50dp</dimen>
 </resources>

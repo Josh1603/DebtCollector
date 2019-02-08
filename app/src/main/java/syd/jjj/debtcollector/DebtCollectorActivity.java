@@ -1,13 +1,26 @@
 package syd.jjj.debtcollector;
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.FragmentManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.LinearSnapHelper;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SimpleItemAnimator;
+import android.support.v7.widget.SnapHelper;
+import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -18,8 +31,13 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 
 /**
@@ -37,8 +55,14 @@ public class DebtCollectorActivity extends AppCompatActivity
 
     private final String CURRENT_DOLLAR_TOTAL_KEY = "current_dollar_total";
     private final String CURRENT_CENT_TOTAL_KEY = "current_cent_total";
+    private final String CURRENT_PERIOD_KEY = "current_period_key";
 
     private boolean decimalPointIncluded;
+    private DebtValue currentDebtValueObj;
+    private RecyclerView mRecyclerView;
+    private DebtValueViewModel debtValueViewModel;
+    List<float[]> noData = new ArrayList<float[]>();
+    GraphRecyclerViewAdapter adapter;
 
     /**
      * Displays the current debt value and provides ImageButtons which open fragments to modify the
@@ -49,13 +73,44 @@ public class DebtCollectorActivity extends AppCompatActivity
 
         super.onCreate(savedInstanceState);
         initialiseTheme();
+
         setContentView(R.layout.activity_main);
+
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        setCurrentPeriodButton();
 
         currentDebtValue = findViewById(R.id.current_debt_value);
         displayCurrentDebt();
         setButtonListeners();
+
+        /*
+        dummyGraphDataSet = new DummyGraphDataSet();
+
+        mDummyGraphDataSets = new ArrayList<>(0);
+        DummyGraphDataSet dummyGraphDataSet1 = new DummyGraphDataSet();
+        DummyGraphDataSet dummyGraphDataSet2 = new DummyGraphDataSet();
+        DummyGraphDataSet dummyGraphDataSet3 = new DummyGraphDataSet();
+        DummyGraphDataSet dummyGraphDataSet4 = new DummyGraphDataSet();
+        DummyGraphDataSet dummyGraphDataSet5 = new DummyGraphDataSet();
+        DummyGraphDataSet dummyGraphDataSet6 = new DummyGraphDataSet();
+
+        mDummyGraphDataSets.add(dummyGraphDataSet1);
+        mGraphRecyclerViewAdapter.notifyItemInserted(mDummyGraphDataSets.indexOf(dummyGraphDataSet1));
+        mDummyGraphDataSets.add(dummyGraphDataSet2);
+        mGraphRecyclerViewAdapter.notifyItemInserted(mDummyGraphDataSets.indexOf(dummyGraphDataSet2));
+        mDummyGraphDataSets.add(dummyGraphDataSet3);
+        mGraphRecyclerViewAdapter.notifyItemInserted(mDummyGraphDataSets.indexOf(dummyGraphDataSet3));
+        mDummyGraphDataSets.add(dummyGraphDataSet4);
+        mGraphRecyclerViewAdapter.notifyItemInserted(mDummyGraphDataSets.indexOf(dummyGraphDataSet4));
+        mDummyGraphDataSets.add(dummyGraphDataSet5);
+        mGraphRecyclerViewAdapter.notifyItemInserted(mDummyGraphDataSets.indexOf(dummyGraphDataSet5));
+        mDummyGraphDataSets.add(dummyGraphDataSet6);
+        mGraphRecyclerViewAdapter.notifyItemInserted(mDummyGraphDataSets.indexOf(dummyGraphDataSet6));
+
+        mRecyclerView.setAdapter(new GraphRecyclerViewAdapter(mDummyGraphDataSets));
+
+        */
 
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -66,6 +121,32 @@ public class DebtCollectorActivity extends AppCompatActivity
         NavigationView navigationView = findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        mRecyclerView = findViewById(R.id.graph_list);
+        //mRecyclerView.setHasFixedSize(true);
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(
+                this, LinearLayoutManager.HORIZONTAL, false);
+        linearLayoutManager.setStackFromEnd(true);
+        mRecyclerView.setLayoutManager(linearLayoutManager);
+        SnapHelper snapHelper = new LinearSnapHelper();
+        snapHelper.attachToRecyclerView(mRecyclerView);
+
+        float[] initData = new float[]{0};
+        noData.add(initData);
+        adapter = new GraphRecyclerViewAdapter(noData, getPeriod());
+        mRecyclerView.setAdapter(adapter);
+
+        debtValueViewModel = ViewModelProviders.of(this).get(DebtValueViewModel.class);
+        debtValueViewModel.getData(getPeriod()).observe(this, new Observer<List<float[]>>() {
+            @Override
+            public void onChanged(@Nullable List<float[]> data) {
+                // Returns cached data automatically after a configuration change,
+                // and will be fired again if underlying LiveData object is modified
+                if (data != null) {
+                    adapter.setDatasets(data);
+                    adapter.notifyDataSetChanged();
+                }
+            }
+        });
         }
 
     @Override
@@ -78,7 +159,7 @@ public class DebtCollectorActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
+        // automatically handle clicks on the Home/Up button, so float
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
@@ -211,6 +292,17 @@ public class DebtCollectorActivity extends AppCompatActivity
         debtCalculations.newDebtValue();
         storeCurrentDollarValue();
         storeCurrentCentValue();
+        storeData();
+        displayCurrentDebt();
+    }
+
+    /**
+     * Stores and displays a new debt value without storing it to the Room database.
+     */
+    public void newDebtValueNoStore() {
+        debtCalculations.newDebtValue();
+        storeCurrentDollarValue();
+        storeCurrentCentValue();
         displayCurrentDebt();
     }
 
@@ -221,6 +313,7 @@ public class DebtCollectorActivity extends AppCompatActivity
         debtCalculations.addDebt();
         storeCurrentDollarValue();
         storeCurrentCentValue();
+        storeData();
         displayCurrentDebt();
     }
 
@@ -232,6 +325,7 @@ public class DebtCollectorActivity extends AppCompatActivity
         debtCalculations.payOffDebt();
         storeCurrentDollarValue();
         storeCurrentCentValue();
+        storeData();
         displayCurrentDebt();
         if (debtCalculations.isPaidOff() && debtCalculations.getRemainderText().equals("")) {
             Snackbar debtPaidOffSnackbar = Snackbar.make(findViewById(R.id.main_view), "Woohoo! You've paid off all your debt.", Snackbar.LENGTH_LONG);
@@ -253,8 +347,13 @@ public class DebtCollectorActivity extends AppCompatActivity
         if (debtCalculations != null) {
             String previousDollarValue = debtCalculations.getPreviousDollars();
             String previousCentValue = debtCalculations.getPreviousCents();
-            debtCalculations = new DebtCalculations(getCurrentDollarValue(), getCurrentCentValue(), previousDollarValue, previousCentValue);
-            newDebtValue();
+            debtCalculations = new DebtCalculations(
+                    getCurrentDollarValue(),
+                    getCurrentCentValue(),
+                    previousDollarValue,
+                    previousCentValue);
+            adjustMostRecentDebtValue();
+            newDebtValueNoStore();
         }
     }
 
@@ -276,6 +375,45 @@ public class DebtCollectorActivity extends AppCompatActivity
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString(CURRENT_CENT_TOTAL_KEY, debtCalculations.getCurrentCents());
         editor.apply();
+    }
+
+    /**
+     * Stores current debt value to a Room database.
+     */
+    public void storeData() {
+        currentDebtValueObj = new DebtValue(new Date(), getCurrentDollarValue(), getCurrentCentValue());
+        new AsyncTask<DebtValue, Void, Void>() {
+            @Override
+            protected Void doInBackground(DebtValue... debtValues) {
+                DebtValueDatabase debtValueDatabase =
+                        DebtValueDatabaseAccessor.getInstance(getApplication());
+                debtValueDatabase.debtValueDAO().insertDebtValue(debtValues[0]);
+                debtValueViewModel.getData(getPeriod());
+                return null;
+            }
+        }.execute(currentDebtValueObj);
+    }
+
+    /**
+     * Adds or removes most recent debt value from the Room database depending on whether it was an
+     * undo or a 'double' undo.
+     */
+    public void adjustMostRecentDebtValue() {
+        if (currentDebtValueObj != null) {
+            new AsyncTask<DebtValue, Void, Void>() {
+                @Override
+                protected Void doInBackground(DebtValue... debtValues) {
+                    DebtValueDatabase debtValueDatabase =
+                            DebtValueDatabaseAccessor.getInstance(getApplication());
+                    debtValueDatabase.debtValueDAO().insertDebtValue(debtValues[0]);
+                    debtValueViewModel.getData(getPeriod());
+                    return null;
+                }
+            }.execute(currentDebtValueObj);
+            currentDebtValueObj = null;
+        } else {
+            storeData();
+        }
     }
 
     /**
@@ -359,6 +497,10 @@ public class DebtCollectorActivity extends AppCompatActivity
         ImageButton newTotalButton = findViewById(R.id.newTotalButton);
         ImageButton undoButton = findViewById(R.id.undoButton);
 
+        final Button weeklyButton = findViewById(R.id.weekly_button);
+        final Button monthlyButton = findViewById(R.id.monthly_button);
+        final Button yearlyButton = findViewById(R.id.yearly_button);
+
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
         decimalPointIncluded = sharedPreferences.getBoolean("decimal_point_separator_switch", false);
@@ -421,6 +563,157 @@ public class DebtCollectorActivity extends AppCompatActivity
                 }
             });
         }
+
+        weeklyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(CURRENT_PERIOD_KEY, "WEEKLY");
+                editor.apply();
+                v.setBackgroundResource(R.drawable.button_focused);
+
+                Resources.Theme theme = getTheme();
+                TypedValue typedValue = new TypedValue();
+                theme.resolveAttribute(R.attr.background, typedValue, true);
+                ((Button) v).setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
+
+                theme.resolveAttribute(R.attr.mainImageButtonTint, typedValue, true);
+
+                monthlyButton.setBackgroundResource(R.drawable.button_unfocused);
+                monthlyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
+
+                yearlyButton.setBackgroundResource(R.drawable.button_unfocused);
+                yearlyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
+
+
+                updateUI();
+            }
+        });
+
+        monthlyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(CURRENT_PERIOD_KEY, "MONTHLY");
+                editor.apply();
+                v.setBackgroundResource(R.drawable.button_focused);
+
+                Resources.Theme theme = getTheme();
+                TypedValue typedValue = new TypedValue();
+                theme.resolveAttribute(R.attr.background, typedValue, true);
+                ((Button) v).setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
+
+                theme.resolveAttribute(R.attr.mainImageButtonTint, typedValue, true);
+
+                weeklyButton.setBackgroundResource(R.drawable.button_unfocused);
+                weeklyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
+
+                yearlyButton.setBackgroundResource(R.drawable.button_unfocused);
+                yearlyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
+
+
+                updateUI();
+            }
+        });
+
+        yearlyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
+                SharedPreferences.Editor editor = sharedPreferences.edit();
+                editor.putString(CURRENT_PERIOD_KEY, "YEARLY");
+                editor.apply();
+                v.setBackgroundResource(R.drawable.button_focused);
+
+                Resources.Theme theme = getTheme();
+                TypedValue typedValue = new TypedValue();
+                theme.resolveAttribute(R.attr.background, typedValue, true);
+                ((Button) v).setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
+
+                theme.resolveAttribute(R.attr.mainImageButtonTint, typedValue, true);
+
+                weeklyButton.setBackgroundResource(R.drawable.button_unfocused);
+                weeklyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
+
+                monthlyButton.setBackgroundResource(R.drawable.button_unfocused);
+                monthlyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
+
+                updateUI();
+            }
+        });
     }
 
+    /**
+     * Gets the current period value from shared preferences.
+     */
+    public String getPeriod() {
+        sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
+        return sharedPreferences.getString(CURRENT_PERIOD_KEY, "MONTHLY");
+    }
+
+    public void setCurrentPeriodButton() {
+
+        final Button weeklyButton = findViewById(R.id.weekly_button);
+        final Button monthlyButton = findViewById(R.id.monthly_button);
+        final Button yearlyButton = findViewById(R.id.yearly_button);
+
+        Resources.Theme theme = getTheme();
+        TypedValue typedValue = new TypedValue();
+        theme.resolveAttribute(R.attr.background, typedValue, true);
+
+        String period = getPeriod();
+        switch (period) {
+            case "WEEKLY":
+                weeklyButton.setBackgroundResource(R.drawable.button_focused);
+                weeklyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
+                break;
+            case "MONTHLY":
+                monthlyButton.setBackgroundResource(R.drawable.button_focused);
+                monthlyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
+                break;
+            case "YEARLY":
+                yearlyButton.setBackgroundResource(R.drawable.button_focused);
+                yearlyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
+                break;
+        }
+    }
+
+    /*
+
+    public void drawGraph() {
+        DebtValue highestDebtValue = dummyGraphDataSet.getHighestDebtValue();
+        float[] dummyGraphData = dummyGraphDataSet.getDummyData();
+        periodGraphView = new PeriodGraphView(this);
+        Calendar cal = Calendar.getInstance();
+        cal.set(2019, Calendar.JANUARY, 14);
+        String period = getPeriod();
+        periodGraphView.setXAxisScaleFactor(cal.getTime(), period);
+        periodGraphView.setYAxisScaleFactor(highestDebtValue);
+        periodGraphView.setDataSet(dummyGraphData);
+    }
+
+    public void drawGraph(PeriodGraphView periodGraphV) {
+        DebtValue highestDebtValue = dummyGraphDataSet.getHighestDebtValue();
+        float[] dummyGraphData = dummyGraphDataSet.getDummyData();
+        periodGraphV = new PeriodGraphView(this);
+        Calendar cal = Calendar.getInstance();
+        cal.set(2019, Calendar.JANUARY, 14);
+        String period = getPeriod();
+        periodGraphV.setXAxisScaleFactor(cal.getTime(), period);
+        periodGraphV.setYAxisScaleFactor(highestDebtValue);
+        periodGraphV.setDataSet(dummyGraphData);
+    }
+
+    */
+
+    /**
+     * Loads data from the Room database according to the current period setting.
+     */
+    public void updateUI() {
+        adapter = new GraphRecyclerViewAdapter(noData, getPeriod());
+        mRecyclerView.swapAdapter(adapter, true);
+        debtValueViewModel.getData(getPeriod());
+    }
 }
