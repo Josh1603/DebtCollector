@@ -25,6 +25,7 @@ public class PeriodGraphView extends View {
     private Paint trendlinePaint;
     private float[] dataSet;
     private float[] normalisedDataSet;
+    private float[] normalisedFloatDataSet;
     private float xAxisScaleFactor;
     private float yAxisScaleFactor;
 
@@ -95,6 +96,7 @@ public class PeriodGraphView extends View {
         if (dataSet != null) {
             this.dataSet = dataSet;
             this.normalisedDataSet = new float[dataSet.length];
+            this.normalisedFloatDataSet = new float[dataSet.length];
             invalidate();
         }
     }
@@ -125,11 +127,6 @@ public class PeriodGraphView extends View {
                 setXAxisByYear(firstPossibleDateOfPeriod);
                 break;
         }
-    }
-
-    public void setYAxisScaleFactor(DebtValue largestDebtValue) {
-        yAxisScaleFactor =
-        Float.valueOf(largestDebtValue.getMDollarValue() + largestDebtValue.getMCentValue());
     }
 
     public void setYAxisScaleFactor(float largestDebtValue) {
@@ -259,7 +256,7 @@ public class PeriodGraphView extends View {
     
     @Override
     protected void onDraw(Canvas canvas) {
-        if (dataSet != null) {
+        if (dataSet.length > 0) {
             int mMeasuredWidth = getMeasuredWidth();
             int mMeasuredHeight = getMeasuredHeight();
 
@@ -279,7 +276,7 @@ public class PeriodGraphView extends View {
                 // X-coordinates representing time.
                 if (i % 2 == 0) {
                     normalisedDataSet[i] = 
-                            (dataSet[i] / xAxisScaleFactor) * xAxisLength 
+                            ((dataSet[i] - dataSet[0]) / xAxisScaleFactor) * xAxisLength
                                     + widthRelativePositioner;
                 }
                 // Y-coordinates representing debt value.
@@ -290,7 +287,6 @@ public class PeriodGraphView extends View {
                 }
             }
 
-            // Draws the trendline.
             canvas.drawLines(normalisedDataSet, trendlinePaint);
 
             // Draws the y-axis.

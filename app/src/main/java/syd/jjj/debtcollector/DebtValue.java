@@ -54,13 +54,13 @@ public class DebtValue {
         return "$" + mDollarValue + "." + mCentValue + " added: " + dateString;
     }
 
-    public float getRawX() {
+    public long getRawX() {
         return mDate.getTime();
     }
 
-    public float getRawY() {
+    public long getRawY() {
         String mDollarCentValue = mDollarValue.concat(mCentValue);
-        return Float.valueOf(mDollarCentValue);
+        return Long.valueOf(mDollarCentValue);
     }
 
 

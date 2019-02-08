@@ -10,14 +10,27 @@ import android.widget.TextView;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 public class GraphRecyclerViewAdapter extends RecyclerView.Adapter<GraphRecyclerViewAdapter.ViewHolder> {
 
-    private final ArrayList<float[]> datasets;
-    private final String period;
+    private List<float[]> datasets;
+    private String period;
 
-    public GraphRecyclerViewAdapter(ArrayList<float[]> datasets, String period) {
+    public GraphRecyclerViewAdapter(List<float[]> datasets, String period) {
         this.datasets = datasets;
+        this.period = period;
+    }
+
+    public List<float[]> getDatasets() {
+        return datasets;
+    }
+
+    public void setDatasets(List<float[]> datasets) {
+        this.datasets = datasets;
+    }
+
+    public void setPeriod(String period) {
         this.period = period;
     }
 
@@ -35,12 +48,15 @@ public class GraphRecyclerViewAdapter extends RecyclerView.Adapter<GraphRecycler
             float[] graphData = datasets.get(i);
             Date firstDateOfPeriod;
             if (graphData != null) {
-                firstDateOfPeriod = new Date((long) graphData[0]);
+                long firstDate = (long) graphData[0];
+                firstDateOfPeriod = new Date(firstDate);
             } else {
                 firstDateOfPeriod = new Date();
             }
             viewHolder.periodGraphView.setXAxisScaleFactor(firstDateOfPeriod, period);
-            viewHolder.periodGraphView.setYAxisScaleFactor(highestDebtValue);
+            if (highestDebtValue != 0) {
+                viewHolder.periodGraphView.setYAxisScaleFactor(highestDebtValue);
+            }
 
             viewHolder.periodGraphView.setDataSet(graphData);
 
@@ -153,6 +169,10 @@ public class GraphRecyclerViewAdapter extends RecyclerView.Adapter<GraphRecycler
         }
     }
 
+    public void setData(List<float[]> data) {
+        datasets = data;
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
         public final View parentView;
         public final TextView detailsView;
@@ -170,7 +190,5 @@ public class GraphRecyclerViewAdapter extends RecyclerView.Adapter<GraphRecycler
         public String toString() {
             return super.toString() + " '" + detailsView.getText() + "'";
         }
-
-
     }
 }

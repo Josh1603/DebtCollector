@@ -1,11 +1,15 @@
 package syd.jjj.debtcollector;
 
+import android.arch.lifecycle.LiveData;
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Resources;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.design.bottomappbar.BottomAppBar;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -14,6 +18,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.LinearSnapHelper;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SimpleItemAnimator;
 import android.support.v7.widget.SnapHelper;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -31,7 +36,6 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -51,24 +55,14 @@ public class DebtCollectorActivity extends AppCompatActivity
 
     private final String CURRENT_DOLLAR_TOTAL_KEY = "current_dollar_total";
     private final String CURRENT_CENT_TOTAL_KEY = "current_cent_total";
-
     private final String CURRENT_PERIOD_KEY = "current_period_key";
-    private final String FIRST_USE_DATE = "first_use_date_key";
-
-    private static final String TAG_LIST_FRAGMENT = "TAG_LIST_FRAGMENT";
 
     private boolean decimalPointIncluded;
-
     private DebtValue currentDebtValueObj;
-
-    private PeriodGraphView periodGraphView;
-
     private RecyclerView mRecyclerView;
-
-    private float startOfPeriod;
-    private float endOfPeriod;
-    private Date currentDate;
-
+    private DebtValueViewModel debtValueViewModel;
+    List<float[]> noData = new ArrayList<float[]>();
+    GraphRecyclerViewAdapter adapter;
 
     /**
      * Displays the current debt value and provides ImageButtons which open fragments to modify the
@@ -79,6 +73,7 @@ public class DebtCollectorActivity extends AppCompatActivity
 
         super.onCreate(savedInstanceState);
         initialiseTheme();
+
         setContentView(R.layout.activity_main);
 
         Toolbar toolbar = findViewById(R.id.toolbar);
@@ -134,7 +129,24 @@ public class DebtCollectorActivity extends AppCompatActivity
         mRecyclerView.setLayoutManager(linearLayoutManager);
         SnapHelper snapHelper = new LinearSnapHelper();
         snapHelper.attachToRecyclerView(mRecyclerView);
-        loadDataFromRoom();
+
+        float[] initData = new float[]{0};
+        noData.add(initData);
+        adapter = new GraphRecyclerViewAdapter(noData, getPeriod());
+        mRecyclerView.setAdapter(adapter);
+
+        debtValueViewModel = ViewModelProviders.of(this).get(DebtValueViewModel.class);
+        debtValueViewModel.getData(getPeriod()).observe(this, new Observer<List<float[]>>() {
+            @Override
+            public void onChanged(@Nullable List<float[]> data) {
+                // Returns cached data automatically after a configuration change,
+                // and will be fired again if underlying LiveData object is modified
+                if (data != null) {
+                    adapter.setDatasets(data);
+                    adapter.notifyDataSetChanged();
+                }
+            }
+        });
         }
 
     @Override
@@ -147,7 +159,7 @@ public class DebtCollectorActivity extends AppCompatActivity
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
+        // automatically handle clicks on the Home/Up button, so float
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
@@ -370,7 +382,16 @@ public class DebtCollectorActivity extends AppCompatActivity
      */
     public void storeData() {
         currentDebtValueObj = new DebtValue(new Date(), getCurrentDollarValue(), getCurrentCentValue());
-        DebtValueDatabaseAccessor.insertDebtValue(currentDebtValueObj, this);
+        new AsyncTask<DebtValue, Void, Void>() {
+            @Override
+            protected Void doInBackground(DebtValue... debtValues) {
+                DebtValueDatabase debtValueDatabase =
+                        DebtValueDatabaseAccessor.getInstance(getApplication());
+                debtValueDatabase.debtValueDAO().insertDebtValue(debtValues[0]);
+                debtValueViewModel.getData(getPeriod());
+                return null;
+            }
+        }.execute(currentDebtValueObj);
     }
 
     /**
@@ -379,7 +400,16 @@ public class DebtCollectorActivity extends AppCompatActivity
      */
     public void adjustMostRecentDebtValue() {
         if (currentDebtValueObj != null) {
-            DebtValueDatabaseAccessor.deleteDebtValue(currentDebtValueObj, this);
+            new AsyncTask<DebtValue, Void, Void>() {
+                @Override
+                protected Void doInBackground(DebtValue... debtValues) {
+                    DebtValueDatabase debtValueDatabase =
+                            DebtValueDatabaseAccessor.getInstance(getApplication());
+                    debtValueDatabase.debtValueDAO().insertDebtValue(debtValues[0]);
+                    debtValueViewModel.getData(getPeriod());
+                    return null;
+                }
+            }.execute(currentDebtValueObj);
             currentDebtValueObj = null;
         } else {
             storeData();
@@ -557,7 +587,7 @@ public class DebtCollectorActivity extends AppCompatActivity
                 yearlyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
 
 
-                loadDataFromRoom();
+                updateUI();
             }
         });
 
@@ -584,7 +614,7 @@ public class DebtCollectorActivity extends AppCompatActivity
                 yearlyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
 
 
-                loadDataFromRoom();
+                updateUI();
             }
         });
 
@@ -610,7 +640,7 @@ public class DebtCollectorActivity extends AppCompatActivity
                 monthlyButton.setBackgroundResource(R.drawable.button_unfocused);
                 monthlyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
 
-                loadDataFromRoom();
+                updateUI();
             }
         });
     }
@@ -621,11 +651,6 @@ public class DebtCollectorActivity extends AppCompatActivity
     public String getPeriod() {
         sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
         return sharedPreferences.getString(CURRENT_PERIOD_KEY, "MONTHLY");
-    }
-
-    public long getFirstUseDate() {
-        sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
-        return sharedPreferences.getLong(FIRST_USE_DATE, -1);
     }
 
     public void setCurrentPeriodButton() {
@@ -686,423 +711,9 @@ public class DebtCollectorActivity extends AppCompatActivity
     /**
      * Loads data from the Room database according to the current period setting.
      */
-    public void loadDataFromRoom() {
-        String period = getPeriod();
-        switch(period) {
-            case "WEEKLY":
-                loadWeeklyDataFromRoom();
-                break;
-            case "MONTHLY":
-                loadMonthlyDataFromRoom();
-                break;
-            case "YEARLY":
-                loadYearlyDataFromRoom();
-            default:
-                break;
-
-        }
+    public void updateUI() {
+        adapter = new GraphRecyclerViewAdapter(noData, getPeriod());
+        mRecyclerView.swapAdapter(adapter, true);
+        debtValueViewModel.getData(getPeriod());
     }
-
-    public void loadWeeklyDataFromRoom(){
-        ArrayList<float[]> datasets = new ArrayList<>();
-        currentDate = new Date();
-        Date startOfWeek = getStartOfWeek(currentDate);
-        setStartOfPeriod(startOfWeek);
-        Date endOfWeek = getEndOfCurrentWeek();
-        setEndOfPeriod(endOfWeek);
-        Date startOfPreviousWeek = getStartOfPreviousWeek(startOfWeek);
-        Date endOfPreviousWeek = getEndOfPreviousWeek(startOfWeek);
-        Date startOfFollowingWeek = getStartOfFollowingWeek(startOfWeek);
-        Date endOfFollowingWeek = getEndOfFollowingWeek(startOfWeek);
-        List<DebtValue> debtValueListCurrent = DebtValueDatabaseAccessor.
-                getDebtValuesBetween(startOfWeek, currentDate, this);
-        List<DebtValue> debtValueListPrior = DebtValueDatabaseAccessor.
-                getDebtValuesBetween(startOfPreviousWeek, endOfPreviousWeek, this);
-        List<DebtValue> debtValueListFollowing = DebtValueDatabaseAccessor.
-                getDebtValuesBetween(startOfFollowingWeek, endOfFollowingWeek, this);
-        float[] dataset = convertDebtValueListToFloatArray(
-                debtValueListPrior,
-                debtValueListCurrent,
-                debtValueListFollowing);
-        if (dataset != null) {
-            datasets.add(dataset);
-        }
-
-        Date startOfNewCurrentWeek = getStartOfPreviousWeek(startOfWeek);
-        Date endOfNewCurrentWeek = getEndOfPreviousWeek(startOfWeek);
-
-        if (getFirstUseDate() == -1) {
-            sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putLong(FIRST_USE_DATE, currentDate.getTime());
-            editor.apply();
-        }
-        Date firstUseDate = new Date(getFirstUseDate());
-
-        while (DebtValueDatabaseAccessor.getDebtValuesBetween(firstUseDate, endOfNewCurrentWeek, this) != null
-                && endOfNewCurrentWeek.getTime() > firstUseDate.getTime()) {
-            List<DebtValue> debtValueListNewCurrent = DebtValueDatabaseAccessor.
-                    getDebtValuesBetween(startOfNewCurrentWeek, endOfNewCurrentWeek, this);
-            List<DebtValue> debtValueListNewPrior = DebtValueDatabaseAccessor.
-                    getDebtValuesBetween(getStartOfPreviousWeek(startOfNewCurrentWeek), getEndOfPreviousWeek(startOfNewCurrentWeek), this);
-            List<DebtValue> debtValueListNewFollowing = DebtValueDatabaseAccessor.
-                    getDebtValuesBetween(getStartOfFollowingWeek(startOfNewCurrentWeek), getEndOfFollowingWeek(startOfNewCurrentWeek), this);
-            float[] datasetNew = convertDebtValueListToFloatArray(
-                    debtValueListNewPrior,
-                    debtValueListNewCurrent,
-                    debtValueListNewFollowing);
-            if (datasetNew != null){
-                datasets.add(datasetNew);
-            }
-            startOfNewCurrentWeek = getStartOfPreviousWeek(startOfNewCurrentWeek);
-            endOfNewCurrentWeek = getEndOfPreviousWeek(startOfNewCurrentWeek);
-        }
-        mRecyclerView.setAdapter(new GraphRecyclerViewAdapter(datasets, getPeriod()));
-    }
-
-    public void loadMonthlyDataFromRoom(){
-        ArrayList<float[]> datasets = new ArrayList<>();
-        currentDate = new Date();
-        Date startOfMonth = getStartOfMonth(currentDate);
-        setStartOfPeriod(startOfMonth);
-        Date endOfMonth = getEndOfCurrentMonth();
-        setEndOfPeriod(endOfMonth);
-        Date startOfPreviousMonth = getStartOfPreviousMonth(startOfMonth);
-        Date endOfPreviousMonth = getEndOfPreviousMonth(startOfMonth);
-        Date startOfFollowingMonth = getStartOfFollowingMonth(startOfMonth);
-        Date endOfFollowingMonth = getEndOfFollowingMonth(startOfMonth);
-        List<DebtValue> debtValueListCurrent = DebtValueDatabaseAccessor.
-                getDebtValuesBetween(startOfMonth, currentDate, this);
-        List<DebtValue> debtValueListPrior = DebtValueDatabaseAccessor.
-                getDebtValuesBetween(startOfPreviousMonth, endOfPreviousMonth, this);
-        List<DebtValue> debtValueListFollowing = DebtValueDatabaseAccessor.
-                getDebtValuesBetween(startOfFollowingMonth, endOfFollowingMonth, this);
-        float[] dataset = convertDebtValueListToFloatArray(
-                debtValueListPrior,
-                debtValueListCurrent,
-                debtValueListFollowing);
-        if (dataset != null) {
-            datasets.add(dataset);
-        }
-
-        Date startOfNewCurrentMonth = getStartOfPreviousMonth(startOfMonth);
-        Date endOfNewCurrentMonth = getEndOfPreviousMonth(startOfMonth);
-
-        if (getFirstUseDate() == -1) {
-            sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putLong(FIRST_USE_DATE, currentDate.getTime());
-        }
-        Date firstUseDate = new Date(getFirstUseDate());
-
-        while (DebtValueDatabaseAccessor.getDebtValuesBetween(firstUseDate, endOfNewCurrentMonth, this) != null
-                && endOfNewCurrentMonth.getTime() > firstUseDate.getTime()) {
-            List<DebtValue> debtValueListNewCurrent = DebtValueDatabaseAccessor.
-                    getDebtValuesBetween(startOfNewCurrentMonth, endOfNewCurrentMonth, this);
-            List<DebtValue> debtValueListNewPrior = DebtValueDatabaseAccessor.
-                    getDebtValuesBetween(getStartOfPreviousMonth(startOfNewCurrentMonth), getEndOfPreviousMonth(startOfNewCurrentMonth), this);
-            List<DebtValue> debtValueListNewFollowing = DebtValueDatabaseAccessor.
-                    getDebtValuesBetween(getStartOfFollowingMonth(startOfNewCurrentMonth), getEndOfFollowingMonth(startOfNewCurrentMonth), this);
-            float[] datasetNew = convertDebtValueListToFloatArray(
-                    debtValueListNewPrior,
-                    debtValueListNewCurrent,
-                    debtValueListNewFollowing);
-            if (datasetNew != null){
-                datasets.add(datasetNew);
-            }
-            startOfNewCurrentMonth = getStartOfPreviousMonth(startOfNewCurrentMonth);
-            endOfNewCurrentMonth = getEndOfPreviousMonth(startOfNewCurrentMonth);
-        }
-        mRecyclerView.setAdapter(new GraphRecyclerViewAdapter(datasets, getPeriod()));
-    }
-
-    public void loadYearlyDataFromRoom(){
-        ArrayList<float[]> datasets = new ArrayList<>();
-        currentDate = new Date();
-        Date startOfYear = getStartOfYear(currentDate);
-        setStartOfPeriod(startOfYear);
-        Date endOfYear = getEndOfCurrentYear();
-        setEndOfPeriod(endOfYear);
-        Date startOfPreviousYear = getStartOfPreviousYear(startOfYear);
-        Date endOfPreviousYear = getEndOfPreviousYear(startOfYear);
-        Date startOfFollowingYear = getStartOfFollowingYear(startOfYear);
-        Date endOfFollowingYear = getEndOfFollowingYear(startOfYear);
-        List<DebtValue> debtValueListCurrent = DebtValueDatabaseAccessor.
-                getDebtValuesBetween(startOfYear, currentDate, this);
-        List<DebtValue> debtValueListPrior = DebtValueDatabaseAccessor.
-                getDebtValuesBetween(startOfPreviousYear, endOfPreviousYear, this);
-        List<DebtValue> debtValueListFollowing = DebtValueDatabaseAccessor.
-                getDebtValuesBetween(startOfFollowingYear, endOfFollowingYear, this);
-        float[] dataset = convertDebtValueListToFloatArray(
-                debtValueListPrior,
-                debtValueListCurrent,
-                debtValueListFollowing);
-        if (dataset != null) {
-            datasets.add(dataset);
-        }
-
-
-        Date startOfNewCurrentYear = getStartOfPreviousYear(startOfYear);
-        Date endOfNewCurrentYear = getEndOfPreviousYear(startOfYear);
-
-        if (getFirstUseDate() == -1) {
-            sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
-            SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putLong(FIRST_USE_DATE, currentDate.getTime());
-        }
-        Date firstUseDate = new Date(getFirstUseDate());
-
-        while (DebtValueDatabaseAccessor.getDebtValuesBetween(firstUseDate, endOfNewCurrentYear, this) != null
-        && endOfNewCurrentYear.getTime() > firstUseDate.getTime()) {
-            List<DebtValue> debtValueListNewCurrent = DebtValueDatabaseAccessor.
-                    getDebtValuesBetween(startOfNewCurrentYear, endOfNewCurrentYear, this);
-            List<DebtValue> debtValueListNewPrior = DebtValueDatabaseAccessor.
-                    getDebtValuesBetween(getStartOfPreviousYear(startOfNewCurrentYear), getEndOfPreviousYear(startOfNewCurrentYear), this);
-            List<DebtValue> debtValueListNewFollowing = DebtValueDatabaseAccessor.
-                    getDebtValuesBetween(getStartOfFollowingYear(startOfNewCurrentYear), getEndOfFollowingYear(startOfNewCurrentYear), this);
-            float[] datasetNew = convertDebtValueListToFloatArray(
-                    debtValueListNewPrior,
-                    debtValueListNewCurrent,
-                    debtValueListNewFollowing);
-            if (datasetNew != null){
-                datasets.add(datasetNew);
-            }
-            startOfNewCurrentYear = getStartOfPreviousYear(startOfNewCurrentYear);
-            endOfNewCurrentYear = getEndOfPreviousYear(startOfNewCurrentYear);
-        }
-        mRecyclerView.setAdapter(new GraphRecyclerViewAdapter(datasets, getPeriod()));
-    }
-    
-    public float[] convertDebtValueListToFloatArray(List<DebtValue> priorDebtValues,
-                                                    List<DebtValue> currentDebtValues,
-                                                    List<DebtValue> followingDebtValues) {
-        int floatArraySize;
-        int incrementer;
-
-        if (currentDebtValues != null) {
-
-        if (followingDebtValues != null) {
-            floatArraySize = (currentDebtValues.size() * 4) + 4;
-        } else {
-            floatArraySize = currentDebtValues.size() * 4;
-        }
-
-        float[] debtValueCoordinates = new float[floatArraySize];
-
-        if (priorDebtValues.size() > 0) {
-            DebtValue lastPreviousDebtValue = priorDebtValues.get(priorDebtValues.size() - 1);
-            DebtValue firstCurrentDebtValue = currentDebtValues.get(0);
-            float xPrev = lastPreviousDebtValue.getRawX();
-            float xCurr = firstCurrentDebtValue.getRawX();
-            float x0 = startOfPeriod;
-            float yPrev = lastPreviousDebtValue.getRawY();
-            float yCurr = firstCurrentDebtValue.getRawY();
-            float y0 = yCurr + (((xCurr - x0) * (yPrev - yCurr)) / (xCurr - xPrev));
-            debtValueCoordinates[0] = x0;
-            debtValueCoordinates[1] = y0;
-            incrementer = 2;
-
-        } else {
-            debtValueCoordinates[0] = startOfPeriod;
-            debtValueCoordinates[1] = 0;
-            incrementer = 2;
-        }
-
-        for (DebtValue debtValue : currentDebtValues) {
-            debtValueCoordinates[incrementer] = debtValue.getRawX();
-            debtValueCoordinates[incrementer + 1] = debtValue.getRawY();
-            debtValueCoordinates[incrementer + 2] = debtValue.getRawX();
-            debtValueCoordinates[incrementer + 3] = debtValue.getRawY();
-            incrementer = incrementer + 4;
-        }
-
-        if (followingDebtValues.size() > 0) {
-            DebtValue lastCurrentDebtValue = currentDebtValues.get(currentDebtValues.size() - 1);
-            DebtValue firstFollowingDebtValue = followingDebtValues.get(0);
-            float xCurr = lastCurrentDebtValue.getRawX();
-            float xFoll = firstFollowingDebtValue.getRawX();
-            float x0 = endOfPeriod;
-            float yCurr = lastCurrentDebtValue.getRawY();
-            float yFoll = firstFollowingDebtValue.getRawY();
-            float y0 = yFoll + (((xFoll - x0) * (yCurr - yFoll)) / (xFoll - xCurr));
-            debtValueCoordinates[incrementer] = x0;
-            debtValueCoordinates[incrementer + 1] = y0;
-
-
-        }
-        return debtValueCoordinates;
-        }
-        return null;
-    }
-
-    public void setStartOfPeriod(Date date) {
-        startOfPeriod = date.getTime();
-    }
-
-    public void setEndOfPeriod(Date date) {
-        endOfPeriod = date.getTime();
-    }
-    
-    public Date getStartOfWeek(Date currentDate) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentDate);
-        int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
-        int difference;
-        switch (dayOfWeek) {
-            case 1:
-                difference = -6;
-                break;
-            default:
-                difference = 2 - dayOfWeek;
-                break;
-        }
-        calendar.add(Calendar.DATE, difference);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        return calendar.getTime();
-    }
-
-    public Date getStartOfPreviousWeek(Date currentWeek) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentWeek);
-        calendar.add(Calendar.DATE, -7);
-        return calendar.getTime();
-    }
-
-    public Date getEndOfPreviousWeek(Date currentWeek) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentWeek);
-        calendar.add(Calendar.MILLISECOND, -1);
-        return calendar.getTime();
-    }
-
-    public Date getStartOfFollowingWeek(Date currentWeek) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentWeek);
-        calendar.add(Calendar.DATE, 7);
-        return calendar.getTime();
-    }
-
-    public Date getEndOfFollowingWeek(Date currentWeek) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentWeek);
-        calendar.add(Calendar.DATE, 14);
-        calendar.add(Calendar.MILLISECOND, -1);
-        return calendar.getTime();
-    }
-
-    public Date getEndOfCurrentWeek() {
-        Date currentWeek = getStartOfWeek(currentDate);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentWeek);
-        calendar.add(Calendar.DATE, 7);
-        calendar.add(Calendar.MILLISECOND, -1);
-        return calendar.getTime();
-    }
-
-    public Date getStartOfMonth(Date currentDate) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentDate);
-        calendar.set(Calendar.DATE, 1);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        return calendar.getTime();
-    }
-    
-    public Date getStartOfPreviousMonth(Date currentMonth) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentMonth);
-        calendar.add(Calendar.MONTH, -1);
-        return calendar.getTime();
-    }
-
-    public Date getEndOfPreviousMonth(Date currentMonth) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentMonth);
-        calendar.add(Calendar.MILLISECOND, -1);
-        return calendar.getTime();
-    }
-
-    public Date getStartOfFollowingMonth(Date currentMonth) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentMonth);
-        calendar.add(Calendar.MONTH, 1);
-        return calendar.getTime();
-    }
-
-    public Date getEndOfFollowingMonth(Date currentMonth) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentMonth);
-        calendar.add(Calendar.MONTH, 2);
-        calendar.add(Calendar.MILLISECOND, -1);
-        return calendar.getTime();
-    }
-
-    public Date getEndOfCurrentMonth() {
-        Date startOfMonth = getStartOfMonth(currentDate);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(startOfMonth);
-        calendar.add(Calendar.MONTH, 1);
-        calendar.add(Calendar.MILLISECOND, -1);
-        return calendar.getTime();
-    }
-
-    public Date getStartOfYear(Date currentDate) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentDate);
-        calendar.set(Calendar.MONTH, 0);
-        calendar.set(Calendar.DATE, 1);
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        return calendar.getTime();
-    }
-
-    public Date getStartOfPreviousYear(Date currentYear) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentYear);
-        calendar.add(Calendar.YEAR, -1);
-        return calendar.getTime();
-    }
-
-    public Date getEndOfPreviousYear(Date currentYear) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentYear);
-        calendar.add(Calendar.MILLISECOND, -1);
-        return calendar.getTime();
-    }
-
-    public Date getStartOfFollowingYear(Date currentYear) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentYear);
-        calendar.add(Calendar.YEAR, 1);
-        return calendar.getTime();
-    }
-
-    public Date getEndOfFollowingYear(Date currentYear) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(currentYear);
-        calendar.add(Calendar.YEAR, 2);
-        calendar.add(Calendar.MILLISECOND, -1);
-        return calendar.getTime();
-    }
-
-    public Date getEndOfCurrentYear() {
-        Date startOfYear = getStartOfYear(currentDate);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTime(startOfYear);
-        calendar.add(Calendar.YEAR, 1);
-        calendar.add(Calendar.MILLISECOND, -1);
-        return calendar.getTime();
-    }
-
-    private interface OnRoomDataChanged {
-        void dataChanged();
-    }
-
 }

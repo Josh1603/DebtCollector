@@ -31,5 +31,8 @@ public interface DebtValueDAO {
 
     @Query("SELECT * FROM debtvalue WHERE mDate BETWEEN :dateStart AND :dateEnd")
     List<DebtValue> getDebtValuesBetween(Date dateStart, Date dateEnd);
+
+    @Query("SELECT MIN(mDate) FROM debtvalue")
+    Date getEarliestDate();
 }
 
