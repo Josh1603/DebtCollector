@@ -260,6 +260,7 @@ public class DebtValueViewModel extends AndroidViewModel {
         }.execute();
     }
 
+    /*
     public void loadYearlyDebtValues(){
         new AsyncTask<Void, Void, List<float[]>>() {
             @Override
@@ -361,6 +362,108 @@ public class DebtValueViewModel extends AndroidViewModel {
             }
         }.execute();
     }
+*/
+    public void loadYearlyDebtValues(){
+        new AsyncTask<Void, Void, List<float[]>>() {
+            @Override
+            protected List<float[]> doInBackground(Void... voids) {
+                ArrayList<float[]> datasets = new ArrayList<>();
+                DebtValueDatabase debtValueDatabase = DebtValueDatabaseAccessor.getInstance(getApplication());
+                Date currentDate = new Date();
+                Date startOfMinute = getStartOfMinute(currentDate);
+                Date endOfMinute = getEndOfCurrentMinute(currentDate);
+                Date startOfPreviousMinute = getStartOfPreviousMinute(startOfMinute);
+                Date endOfPreviousMinute = getEndOfPreviousMinute(startOfMinute);
+                Date startOfFollowingMinute = getStartOfFollowingMinute(startOfMinute);
+                Date endOfFollowingMinute = getEndOfFollowingMinute(startOfMinute);
+
+                List<DebtValue> debtValueListCurrent =
+                        debtValueDatabase
+                                .debtValueDAO()
+                                .getDebtValuesBetween(
+                                        startOfMinute,
+                                        currentDate);
+
+                List<DebtValue> debtValueListPrior =
+                        debtValueDatabase
+                                .debtValueDAO()
+                                .getDebtValuesBetween(
+                                        startOfPreviousMinute,
+                                        endOfPreviousMinute);
+
+                List<DebtValue> debtValueListFollowing =
+                        debtValueDatabase
+                                .debtValueDAO()
+                                .getDebtValuesBetween(
+                                        startOfFollowingMinute,
+                                        endOfFollowingMinute);
+
+                float[] dataset = convertDebtValueListToFloatArray(
+                        debtValueListPrior,
+                        debtValueListCurrent,
+                        debtValueListFollowing,
+                        startOfMinute.getTime(),
+                        endOfMinute.getTime());
+                if (dataset != null) {
+                    datasets.add(dataset);
+                }
+
+
+                Date startOfNewCurrentMinute = getStartOfPreviousMinute(startOfMinute);
+                Date endOfNewCurrentMinute = getEndOfPreviousMinute(startOfMinute);
+
+                Date firstUseDate = debtValueDatabase.debtValueDAO().getEarliestDate();
+
+                if (firstUseDate == null) {
+                    firstUseDate = currentDate;
+                }
+                while (debtValueDatabase.debtValueDAO().getDebtValuesBetween(
+                        firstUseDate,
+                        endOfNewCurrentMinute) != null
+                        && endOfNewCurrentMinute.getTime() > firstUseDate.getTime()) {
+
+                    List<DebtValue> debtValueListNewCurrent =
+                            debtValueDatabase
+                                    .debtValueDAO()
+                                    .getDebtValuesBetween(
+                                            startOfNewCurrentMinute,
+                                            endOfNewCurrentMinute);
+
+                    List<DebtValue> debtValueListNewPrior =
+                            debtValueDatabase
+                                    .debtValueDAO()
+                                    .getDebtValuesBetween(
+                                            getStartOfPreviousMinute(startOfNewCurrentMinute),
+                                            getEndOfPreviousMinute(startOfNewCurrentMinute));
+
+                    List<DebtValue> debtValueListNewFollowing =
+                            debtValueDatabase
+                                    .debtValueDAO()
+                                    .getDebtValuesBetween(
+                                            getStartOfFollowingMinute(startOfNewCurrentMinute),
+                                            getEndOfFollowingMinute(startOfNewCurrentMinute));
+
+                    float[] datasetNew = convertDebtValueListToFloatArray(
+                            debtValueListNewPrior,
+                            debtValueListNewCurrent,
+                            debtValueListNewFollowing,
+                            startOfNewCurrentMinute.getTime(),
+                            endOfNewCurrentMinute.getTime());
+                    if (datasetNew != null){
+                        datasets.add(datasetNew);
+                    }
+                    startOfNewCurrentMinute = getStartOfPreviousMinute(startOfNewCurrentMinute);
+                    endOfNewCurrentMinute = getEndOfPreviousMinute(startOfNewCurrentMinute);
+                }
+                return datasets;
+            }
+
+            @Override
+            protected void onPostExecute(List<float[]> data) {
+                debtValues.setValue(data);
+            }
+        }.execute();
+    }
 
     public float[] convertDebtValueListToFloatArray(List<DebtValue> priorDebtValues,
                                                     List<DebtValue> currentDebtValues,
@@ -380,7 +483,7 @@ public class DebtValueViewModel extends AndroidViewModel {
 
             float[] debtValueCoordinates = new float[floatArraySize];
 
-            if (priorDebtValues.size() > 0) {
+            if (priorDebtValues.size() > 0 && currentDebtValues.size() > 0) {
                 DebtValue lastPreviousDebtValue = priorDebtValues.get(priorDebtValues.size() - 1);
                 DebtValue firstCurrentDebtValue = currentDebtValues.get(0);
                 float xPrev = lastPreviousDebtValue.getRawX();
@@ -394,9 +497,15 @@ public class DebtValueViewModel extends AndroidViewModel {
                 incrementer = 2;
 
             } else {
-                debtValueCoordinates[0] = startOfPeriod;
-                debtValueCoordinates[1] = 0;
-                incrementer = 2;
+                if (priorDebtValues.size() > 0){
+                    debtValueCoordinates[0] = startOfPeriod;
+                    debtValueCoordinates[1] = priorDebtValues.get(priorDebtValues.size() - 1).getRawY();
+                    incrementer = 2;
+                } else {
+                    debtValueCoordinates[0] = startOfPeriod;
+                    debtValueCoordinates[1] = 0;
+                    incrementer = 2;
+                }
             }
 
             for (DebtValue debtValue : currentDebtValues) {
@@ -407,7 +516,7 @@ public class DebtValueViewModel extends AndroidViewModel {
                 incrementer = incrementer + 4;
             }
 
-            if (followingDebtValues.size() > 0) {
+            if (followingDebtValues.size() > 0 && currentDebtValues.size() > 0) {
                 DebtValue lastCurrentDebtValue = currentDebtValues.get(currentDebtValues.size() - 1);
                 DebtValue firstFollowingDebtValue = followingDebtValues.get(0);
                 float xCurr = lastCurrentDebtValue.getRawX();
@@ -441,7 +550,7 @@ public class DebtValueViewModel extends AndroidViewModel {
         }
         calendar.add(Calendar.DATE, difference);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.MINUTE, 1);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         return calendar.getTime();
@@ -488,9 +597,9 @@ public class DebtValueViewModel extends AndroidViewModel {
     public Date getStartOfMonth(Date currentDate) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(currentDate);
-        calendar.set(Calendar.DATE, 1);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.MINUTE, 1);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         return calendar.getTime();
@@ -540,7 +649,7 @@ public class DebtValueViewModel extends AndroidViewModel {
         calendar.set(Calendar.MONTH, 0);
         calendar.set(Calendar.DATE, 1);
         calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.MINUTE, 1);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         return calendar.getTime();
@@ -580,6 +689,52 @@ public class DebtValueViewModel extends AndroidViewModel {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(startOfYear);
         calendar.add(Calendar.YEAR, 1);
+        calendar.add(Calendar.MILLISECOND, -1);
+        return calendar.getTime();
+    }
+
+    public Date getStartOfMinute(Date currentDate) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentDate);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    public Date getStartOfPreviousMinute(Date currentMinute) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentMinute);
+        calendar.add(Calendar.MINUTE, -1);
+        return calendar.getTime();
+    }
+
+    public Date getEndOfPreviousMinute(Date currentMinute) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentMinute);
+        calendar.add(Calendar.MILLISECOND, -1);
+        return calendar.getTime();
+    }
+
+    public Date getStartOfFollowingMinute(Date currentMinute) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentMinute);
+        calendar.add(Calendar.MINUTE, 1);
+        return calendar.getTime();
+    }
+
+    public Date getEndOfFollowingMinute(Date currentMinute) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentMinute);
+        calendar.add(Calendar.MINUTE, 2);
+        calendar.add(Calendar.MILLISECOND, -1);
+        return calendar.getTime();
+    }
+
+    public Date getEndOfCurrentMinute(Date currentDate) {
+        Date startOfMinute = getStartOfMinute(currentDate);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startOfMinute);
+        calendar.add(Calendar.MINUTE, 1);
         calendar.add(Calendar.MILLISECOND, -1);
         return calendar.getTime();
     }
