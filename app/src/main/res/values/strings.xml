@@ -23,9 +23,6 @@
     <string name="undo">Undo</string>
     <string name="undo_last_payment">Undo last payment</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
-
     <string name="tab_weekly">Weekly</string>
     <string name="tab_monthly">Monthly</string>
     <string name="tab_yearly">Yearly</string>

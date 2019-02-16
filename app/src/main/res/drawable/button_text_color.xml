@@ -3,7 +3,7 @@
     <!-- Focused and not pressed -->
     <item android:state_focused="true"
         android:state_pressed="false"
-        android:color="?attr/mainImageButtonTint" />
+        android:color="?attr/periodButtonTextAndOutlineColor" />
 
     <!-- Focused and pressed -->
     <item android:state_focused="true"
@@ -16,5 +16,5 @@
         android:color="?attr/background" />
 
     <!-- Default color -->
-    <item android:color="?attr/mainImageButtonTint" />
+    <item android:color="?attr/periodButtonTextAndOutlineColor" />
 </selector>

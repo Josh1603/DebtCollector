@@ -12,19 +12,21 @@ import java.util.List;
 
 @Dao
 public interface DebtValueDAO {
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    void insertDebtValues(List<DebtValue> debtValues);
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertDebtValue(DebtValue debtValue);
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertDebtValues(List<DebtValue> debtValues);
+
     @Delete
     void deleteDebtValue(DebtValue debtValue);
 
-
-    // TODO ***CHECK WHETHER THIS WORKS. IF NOT REMOVE DATETIME AND CHANGE TO ORDER BY mDate.***
     @Query("SELECT * FROM debtvalue ORDER BY datetime(mDate) DESC")
     List<DebtValue> allDebtValues();
+
+    @Query("DELETE FROM debtvalue")
+    void deleteAllDebtValues();
 
     @Query("SELECT * FROM debtvalue WHERE mDate =:date")
     DebtValue getDebtValue(Date date);

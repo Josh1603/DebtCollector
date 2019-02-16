@@ -1,6 +1,8 @@
 package syd.jjj.debtcollector;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.ContextWrapper;
 import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Paint;
@@ -17,6 +19,8 @@ import android.view.WindowManager;
 
 import java.util.Calendar;
 import java.util.Date;
+
+import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
 
 public class PeriodGraphView extends View {
 
@@ -73,19 +77,19 @@ public class PeriodGraphView extends View {
         TypedValue typedValue = new TypedValue();
 
         backgroundPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        theme.resolveAttribute(R.attr.colorPrimary, typedValue, true);
+        theme.resolveAttribute(R.attr.periodGraphBackgroundColor, typedValue, true);
         backgroundPaint.setColor(ContextCompat.getColor(c, typedValue.resourceId));
         backgroundPaint.setStyle(Paint.Style.FILL);
         
         axesPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        theme.resolveAttribute(R.attr.colorPrimaryDark, typedValue, true);
+        theme.resolveAttribute(R.attr.periodGraphAxesColor, typedValue, true);
         axesPaint.setColor(ContextCompat.getColor(c, typedValue.resourceId));
         axesPaint.setStrokeWidth(5);
         axesPaint.setStrokeCap(Paint.Cap.ROUND);
         axesPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
         trendlinePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-        theme.resolveAttribute(R.attr.colorAccent, typedValue, true);
+        theme.resolveAttribute(R.attr.periodGraphTrendlineColor, typedValue, true);
         trendlinePaint.setColor(ContextCompat.getColor(c, typedValue.resourceId));
         trendlinePaint.setStrokeWidth(5);
         trendlinePaint.setStrokeCap(Paint.Cap.ROUND);
@@ -124,8 +128,12 @@ public class PeriodGraphView extends View {
                 setXAxisByMonth(firstPossibleDateOfPeriod);
                 break;
             case "YEARLY":
+                //TODO: Test using minutely data
+                /*
                 setXAxisByYear(firstPossibleDateOfPeriod);
                 break;
+                */
+                xAxisScaleFactor = DateUtils.MINUTE_IN_MILLIS;
         }
     }
 
@@ -212,8 +220,18 @@ public class PeriodGraphView extends View {
         Point size = new Point();
         display.getSize(size);
 
-        int pixelWidth = size.x - 96;
-        int pixelHeight = (5 * size.y) / 12;
+        int pixelWidth;
+        int pixelHeight;
+
+
+        if (getActivity().getResources().getConfiguration().orientation == ORIENTATION_PORTRAIT) {
+            pixelWidth = size.x - 96;
+            pixelHeight = (5 * size.y) / 12;
+        } else {
+            pixelWidth = size.x - 96;
+            pixelHeight = (18 * size.y) / 24;
+        }
+
 
         final int desiredWSpec = MeasureSpec.makeMeasureSpec(pixelWidth, MeasureSpec.AT_MOST);
         final int desiredHSpec = MeasureSpec.makeMeasureSpec(pixelHeight, MeasureSpec.AT_MOST);
@@ -301,5 +319,16 @@ public class PeriodGraphView extends View {
 
             canvas.save();
         }
+    }
+
+    private Activity getActivity() {
+        Context context = getContext();
+        while (context instanceof ContextWrapper) {
+            if (context instanceof Activity) {
+                return (Activity)context;
+            }
+            context = ((ContextWrapper)context).getBaseContext();
+        }
+        return null;
     }
 }

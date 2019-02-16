@@ -20,6 +20,7 @@
         android:minHeight="24dp"
         android:text="Weekly"
         android:fontFamily="sans-serif-light"
+        android:visibility="gone"
         android:textColor="@drawable/button_text_color"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
         app:layout_constraintLeft_toLeftOf="parent"
@@ -34,6 +35,7 @@
         android:minHeight="24dp"
         android:text="Monthly"
         android:fontFamily="sans-serif-light"
+        android:visibility="gone"
         android:textColor="@drawable/button_text_color"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
         app:layout_constraintLeft_toRightOf="@id/weekly_button"
@@ -48,6 +50,7 @@
         android:minHeight="24dp"
         android:text="Yearly"
         android:fontFamily="sans-serif-light"
+        android:visibility="gone"
         android:textColor="@drawable/button_text_color"
         app:layout_constraintBottom_toTopOf="@id/guideline_top"
         app:layout_constraintLeft_toRightOf="@id/monthly_button"
@@ -57,21 +60,29 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
+        android:visibility="gone"
         android:background="?attr/breakLineColor"
         app:layout_constraintTop_toBottomOf="@id/guideline_top" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/graph_list"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
+        android:layout_height="match_parent"
         android:background="?attr/recyclerViewBackgroundColor"
-        app:layout_constraintBottom_toTopOf="@id/guideline_bottom"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/guideline_top"
+        app:layout_constraintTop_toTopOf="parent"
         android:clipToPadding="false"
         android:paddingStart="12dp"
         android:paddingEnd="12dp"/>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:visibility="gone"
+        android:background="?attr/breakLineColor"
+        app:layout_constraintTop_toBottomOf="@id/guideline_bottom" />
 
     <TextView
         android:id="@+id/current_debt"
@@ -79,6 +90,7 @@
         android:layout_height="wrap_content"
         android:text="@string/current_debt"
         android:fontFamily="sans-serif-light"
+        android:visibility="gone"
         android:textColor="?attr/counterTextColor"
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -93,7 +105,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text=""
-        android:fontFamily="sans-serif-light"
+        android:visibility="gone"
         android:textColor="?attr/counterTextColor"
         android:textSize="30sp"
         app:layout_constraintBottom_toBottomOf="parent"

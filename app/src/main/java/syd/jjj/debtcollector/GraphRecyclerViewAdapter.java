@@ -14,24 +14,26 @@ import java.util.List;
 
 public class GraphRecyclerViewAdapter extends RecyclerView.Adapter<GraphRecyclerViewAdapter.ViewHolder> {
 
-    private List<float[]> datasets;
+    private List<DebtValue> dataset;
     private String period;
+    private Date currentDate = new Date();
+    private Date endDate;
 
-    public GraphRecyclerViewAdapter(List<float[]> datasets, String period) {
-        this.datasets = datasets;
+    public GraphRecyclerViewAdapter(List<DebtValue> dataset, String period) {
+        this.dataset = dataset;
         this.period = period;
     }
 
-    public List<float[]> getDatasets() {
-        return datasets;
+    public void setDataset(List<DebtValue> dataset) {
+        this.dataset = dataset;
     }
 
-    public void setDatasets(List<float[]> datasets) {
-        this.datasets = datasets;
+    public List<DebtValue> getDataset() {
+        return dataset;
     }
 
-    public void setPeriod(String period) {
-        this.period = period;
+    public Date getEndDate() {
+        return endDate;
     }
 
     @NonNull
@@ -43,84 +45,365 @@ public class GraphRecyclerViewAdapter extends RecyclerView.Adapter<GraphRecycler
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder viewHolder, int i) {
-        if (!datasets.isEmpty()) {
-            float highestDebtValue = getHighestDebtValue(datasets.get(i));
-            float[] graphData = datasets.get(i);
-            Date firstDateOfPeriod;
-            if (graphData != null) {
-                long firstDate = (long) graphData[0];
-                firstDateOfPeriod = new Date(firstDate);
+
+        Calendar cal = Calendar.getInstance();
+        String displayText;
+        
+        // Draws the 'up-to-date' GraphView for a given period.
+        if (i == 0) {
+            if (dataset.size() > 0) {
+                float[] data;
+                switch (period) {
+                    case ("WEEKLY"):
+                        data = getCurrentWeeklyData();
+                        viewHolder.periodGraphView.setXAxisScaleFactor(
+                                getStartOfWeek(currentDate),
+                                period);
+                        viewHolder.periodGraphView.setYAxisScaleFactor(
+                                getHighestDebtValue(data));
+                        viewHolder.periodGraphView.setDataSet(data);
+
+                        cal.setTime(getStartOfWeek(currentDate));
+                        cal.setMinimalDaysInFirstWeek(7);
+                        displayText = "Week " + cal.get(Calendar.WEEK_OF_YEAR) + " - " + cal.get(Calendar.YEAR);
+                        viewHolder.detailsView.setText(displayText);
+                        break;
+                    case ("MONTHLY"):
+                        data = getCurrentMonthlyData();
+                        viewHolder.periodGraphView.setXAxisScaleFactor(
+                                getStartOfMonth(currentDate),
+                                period);
+                        viewHolder.periodGraphView.setYAxisScaleFactor(
+                                getHighestDebtValue(data));
+                        viewHolder.periodGraphView.setDataSet(data);
+
+                        cal.setTime(getStartOfMonth(currentDate));
+                        String month = getMonthString(cal.get(Calendar.MONTH));
+                        displayText = month + " " + cal.get(Calendar.YEAR);
+                        viewHolder.detailsView.setText(displayText);
+                        break;
+                    case ("YEARLY"):
+                        //TODO: Test minutely
+                        /*
+                        data = getCurrentYearlyData();
+                        viewHolder.periodGraphView.setXAxisScaleFactor(
+                                getStartOfYear(currentDate),
+                                period);
+                        viewHolder.periodGraphView.setYAxisScaleFactor(
+                                getHighestDebtValue(data));
+                        viewHolder.periodGraphView.setDataSet(data);
+
+                        cal.setTime(getStartOfYear(currentDate));
+                        displayText = Integer.toString(cal.get(Calendar.YEAR));
+                        viewHolder.detailsView.setText(displayText);
+                        break;
+                        */
+                        data = getCurrentMinutelyData();
+                        viewHolder.periodGraphView.setXAxisScaleFactor(
+                                getStartOfMinute(currentDate),
+                                period);
+                        viewHolder.periodGraphView.setYAxisScaleFactor(
+                                getHighestDebtValue(data));
+                        viewHolder.periodGraphView.setDataSet(data);
+
+                        cal.setTime(getStartOfMinute(currentDate));
+                        displayText = Integer.toString(cal.get(Calendar.MINUTE));
+                        viewHolder.detailsView.setText(displayText);
+                        break;
+                }
             } else {
-                firstDateOfPeriod = new Date();
+                viewHolder.periodGraphView.setXAxisScaleFactor(currentDate, "WEEKLY");
+                viewHolder.periodGraphView.setYAxisScaleFactor(1);
+                viewHolder.periodGraphView.setDataSet(new float[]{0,0,0,0});
+                viewHolder.detailsView.setText("Set your first value below");
             }
-            viewHolder.periodGraphView.setXAxisScaleFactor(firstDateOfPeriod, period);
-            if (highestDebtValue != 0) {
-                viewHolder.periodGraphView.setYAxisScaleFactor(highestDebtValue);
-            }
+        }
 
-            viewHolder.periodGraphView.setDataSet(graphData);
-
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(firstDateOfPeriod);
-            cal.setMinimalDaysInFirstWeek(7);
-
-            String displayText;
-
+        // Draws GraphView based on position.
+        if (i > 0) {
+            float[] data;
             switch (period) {
                 case ("WEEKLY"):
+                    data = getWeeklyDataAt(i);
+                    viewHolder.periodGraphView.setXAxisScaleFactor(
+                            getStartOfWeek(currentDate, i),
+                            period);
+                    viewHolder.periodGraphView.setYAxisScaleFactor(
+                            getHighestDebtValue(data));
+                    viewHolder.periodGraphView.setDataSet(data);
+
+                    cal.setTime(getStartOfWeek(currentDate, i));
+                    cal.setMinimalDaysInFirstWeek(7);
                     displayText = "Week " + cal.get(Calendar.WEEK_OF_YEAR) + " - " + cal.get(Calendar.YEAR);
                     viewHolder.detailsView.setText(displayText);
                     break;
                 case ("MONTHLY"):
+                    data = getMonthlyDataAt(i);
+                    viewHolder.periodGraphView.setXAxisScaleFactor(
+                            getStartOfMonth(currentDate, i),
+                            period);
+                    viewHolder.periodGraphView.setYAxisScaleFactor(
+                            getHighestDebtValue(data));
+                    viewHolder.periodGraphView.setDataSet(data);
+
+                    cal.setTime(getStartOfMonth(currentDate, i));
                     String month = getMonthString(cal.get(Calendar.MONTH));
                     displayText = month + " " + cal.get(Calendar.YEAR);
                     viewHolder.detailsView.setText(displayText);
                     break;
                 case ("YEARLY"):
+                    //TODO: Test minutely
+                    /*
+                    data = getYearlyDataAt(i);
+                    viewHolder.periodGraphView.setXAxisScaleFactor(
+                            getStartOfYear(currentDate, i),
+                            period);
+                    viewHolder.periodGraphView.setYAxisScaleFactor(
+                            getHighestDebtValue(data));
+                    viewHolder.periodGraphView.setDataSet(data);
+
+                    cal.setTime(getStartOfYear(currentDate, i));
                     displayText = Integer.toString(cal.get(Calendar.YEAR));
                     viewHolder.detailsView.setText(displayText);
                     break;
-                default:
-                    displayText = "View Adapter 'display text' Error";
-                    viewHolder.detailsView.setText(displayText);
-                    break;
-            }
-        } else {
-            Date currentDate = new Date();
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(currentDate);
-            cal.setMinimalDaysInFirstWeek(7);
+                    */
+                    data = getMinutelyDataAt(i);
+                    viewHolder.periodGraphView.setXAxisScaleFactor(
+                            getStartOfMinute(currentDate, i),
+                            period);
+                    viewHolder.periodGraphView.setYAxisScaleFactor(
+                            getHighestDebtValue(data));
+                    viewHolder.periodGraphView.setDataSet(data);
 
-            String displayText;
-
-            switch (period) {
-                case ("WEEKLY"):
-                    displayText = "Week " + cal.get(Calendar.WEEK_OF_YEAR) + " - " + cal.get(Calendar.YEAR);
-                    viewHolder.detailsView.setText(displayText);
-                    break;
-                case ("MONTHLY"):
-                    String month = getMonthString(cal.get(Calendar.MONTH));
-                    displayText = month + " " + cal.get(Calendar.YEAR);
-                    viewHolder.detailsView.setText(displayText);
-                    break;
-                case ("YEARLY"):
-                    displayText = Integer.toString(cal.get(Calendar.YEAR));
-                    viewHolder.detailsView.setText(displayText);
-                    break;
-                default:
-                    displayText = "View Adapter 'display text' Error";
+                    cal.setTime(getStartOfMinute(currentDate, i));
+                    displayText = Integer.toString(cal.get(Calendar.MINUTE));
                     viewHolder.detailsView.setText(displayText);
                     break;
             }
         }
     }
+    
+    public float[] getCurrentWeeklyData() {
+        Date startOfWeek = getStartOfWeek(currentDate);
+        Date endOfWeek = getEndOfWeek(startOfWeek);
+        return convertCurrentData(startOfWeek, endOfWeek);
+    }
+
+    public float[] getCurrentMonthlyData() {
+        Date startOfMonth = getStartOfMonth(currentDate);
+        Date endOfMonth = getEndOfMonth(startOfMonth);
+        return convertCurrentData(startOfMonth, endOfMonth);
+    }
+
+    public float[] getCurrentYearlyData() {
+        Date startOfYear = getStartOfYear(currentDate);
+        Date endOfYear = getEndOfYear(startOfYear);
+        return convertCurrentData(startOfYear, endOfYear);
+    }
+
+    public float[] getWeeklyDataAt(int position) {
+        Date startOfWeek = getStartOfWeek(currentDate, position);
+        Date endOfWeek = getEndOfWeek(startOfWeek);
+        return convertDataBetween(startOfWeek, endOfWeek);
+    }
+
+    public float[] getMonthlyDataAt(int position) {
+        Date startOfMonth = getStartOfMonth(currentDate, position);
+        Date endOfMonth = getEndOfMonth(startOfMonth);
+        return convertDataBetween(startOfMonth, endOfMonth);
+    }
+
+    public float[] getYearlyDataAt(int position) {
+        Date startOfYear = getStartOfYear(currentDate, position);
+        Date endOfYear = getEndOfYear(startOfYear);
+        return convertDataBetween(startOfYear, endOfYear);
+    }
+
+    public float[] convertCurrentData(Date startDate, Date endDate) {
+        this.endDate = endDate;
+        List<DebtValue> rawData = new ArrayList<>();
+        DebtValue lastCheckedDebtValue = dataset.get(dataset.size() -1);
+        int conversionIterator = dataset.size() - 1;
+        int lastCheckedPosition = conversionIterator;
+        while (lastCheckedDebtValue.getMDate().getTime() > startDate.getTime()
+                && conversionIterator >= 0) {
+            rawData.add(lastCheckedDebtValue);
+            conversionIterator--;
+            if (conversionIterator >= 0) {
+                lastCheckedDebtValue = dataset.get(conversionIterator);
+                lastCheckedPosition = conversionIterator;
+            }
+        }
+
+        DebtValue initialiserDebtValue;
+        if (lastCheckedPosition > 0) {
+            DebtValue lastPreviousDebtValue = dataset.get(lastCheckedPosition);
+            initialiserDebtValue = new DebtValue(
+                    startDate,
+                    lastPreviousDebtValue.getMDollarValue(),
+                    lastPreviousDebtValue.getMCentValue());
+        } else {
+            initialiserDebtValue = new DebtValue(
+                    startDate,
+                    "0",
+                    "00");
+        }
+
+        float[] plotableData;
+        if (rawData.size() > 0){
+            rawData.add(initialiserDebtValue);
+            plotableData = new float[rawData.size() * 4  - 4];
+        } else {
+            plotableData = new float[]{0,0,0,0};
+        }
+
+        int pos = 0;
+        for (int i = (rawData.size() - 1); i > 0; i--) {
+            // Each iteration stores two sets of coordinates required to draw a single line.
+            // x - value position of first coordinate relative to first point in the series.
+            plotableData[pos] = rawData.get(i).getRawX() - rawData.get(rawData.size() - 1).getRawX();
+            // y - value position of first coordinate.
+            plotableData[pos + 1] = rawData.get(i).getRawY();
+            // x - value position of second coordinate relative to first point in the series.
+            plotableData[pos + 2] = rawData.get(i - 1).getRawX() - rawData.get(rawData.size() - 1).getRawX();
+            // y - value position of second coordinate.
+            plotableData[pos + 3] = rawData.get(i - 1).getRawY();
+            pos = pos + 4;
+        }
+        return plotableData;
+    }
+
+    public float[] convertDataBetween(Date startDate, Date endDate) {
+        // Get debtvalue data between given dates
+        //(Get previous value and set at x=0 (and x=l if no data))        
+        // Convert data into a plottable float array based on size
+        List<DebtValue> rawData = new ArrayList<>();
+
+        int iterator = dataset.size() -1;
+        while (iterator > 0 && dataset.get(iterator).getMDate().getTime() > endDate.getTime()){
+            iterator--;
+        }
+        // Store a value to "complete" graph based on the last store value.
+        DebtValue lastCheckedDebtValue = dataset.get(iterator);
+        DebtValue lastDataValue = new DebtValue(
+                endDate,
+                lastCheckedDebtValue.getMDollarValue(),
+                lastCheckedDebtValue.getMCentValue());
+        rawData.add(lastDataValue);
+
+        while (lastCheckedDebtValue.getMDate().getTime() > startDate.getTime() && iterator >= 0) {
+            rawData.add(lastCheckedDebtValue);
+            iterator--;
+            if (iterator >= 0){
+                lastCheckedDebtValue = dataset.get(iterator);
+            }
+        }
+
+        if (iterator > 0) {
+            DebtValue lastPreviousDebtValue = dataset.get(iterator);
+            DebtValue initialiserDebtValue = new DebtValue(
+                    startDate,
+                    lastPreviousDebtValue.getMDollarValue(),
+                    lastPreviousDebtValue.getMCentValue());
+            rawData.add(initialiserDebtValue);
+        } else {
+            DebtValue initialiserDebtValue = new DebtValue(
+                    startDate,
+                    "0",
+                    "00");
+            rawData.add(initialiserDebtValue);
+        }
+
+        float[] plotableData = new float[rawData.size() * 4  - 4];
+        int pos = 0;
+        for (int i = (rawData.size() - 1); i > 0; i--) {
+            // Each iteration stores two sets of coordinates required to draw a single line.
+            // x - value position of first coordinate relative to first point in the series.
+            plotableData[pos] = rawData.get(i).getRawX() - rawData.get(rawData.size() - 1).getRawX();
+            // y - value position of first coordinate.
+            plotableData[pos + 1] = rawData.get(i).getRawY();
+            // x - value position of second coordinate relative to first point in the series.
+            plotableData[pos + 2] = rawData.get(i - 1).getRawX() - rawData.get(rawData.size() - 1).getRawX();
+            // y - value position of second coordinate.
+            plotableData[pos + 3] = rawData.get(i - 1).getRawY();
+            pos = pos + 4;
+        }
+        return plotableData;
+    }
 
     @Override
     public int getItemCount() {
-        if (datasets != null){
-            return datasets.size();
+
+        Date firstDate;
+        Date lastDate;
+
+        if (dataset.size() > 0){
+
+            switch (period) {
+                case ("WEEKLY"):
+                    firstDate = getStartOfWeek(dataset.get(0).getMDate());
+                    lastDate = getStartOfWeek(currentDate);
+                    return amountOfWeeklyGraphs(firstDate, lastDate);
+                case ("MONTHLY"):
+                    firstDate = getStartOfMonth(dataset.get(0).getMDate());
+                    lastDate = getStartOfMonth(currentDate);
+                    return amountOfMonthlyGraphs(firstDate, lastDate);
+                case ("YEARLY"):
+                    //TODO: Test minutely
+                    /*
+                    firstDate = getStartOfYear(dataset.get(0).getMDate());
+                    lastDate = getStartOfYear(currentDate);
+                    return amountOfYearlyGraphs(firstDate, lastDate);
+                    */
+                    firstDate = getStartOfMinute(dataset.get(0).getMDate());
+                    lastDate = getStartOfMinute(currentDate);
+                    return amountOfMinutelyGraphs(firstDate, lastDate);
+            }
+
         }
         return 1;
+    }
+
+    public int amountOfWeeklyGraphs(Date firstDate, Date lastDate) {
+        if (dataset.size() < 1)
+            return 1;
+
+        int graphCount = 0;
+        long limit = lastDate.getTime();
+        while (limit >= firstDate.getTime()) {
+            graphCount++;
+            limit = getStartOfWeek(currentDate, graphCount).getTime();
+        }
+
+        return graphCount;
+    }
+
+    public int amountOfMonthlyGraphs(Date firstDate, Date lastDate) {
+        if (dataset.size() < 1)
+            return 1;
+
+        int graphCount = 0;
+        long limit = lastDate.getTime();
+        while (limit >= firstDate.getTime()) {
+            graphCount++;
+            limit = getStartOfMonth(currentDate, graphCount).getTime();
+        }
+
+        return graphCount;
+    }
+
+    public int amountOfYearlyGraphs(Date firstDate, Date lastDate) {
+        if (dataset.size() < 1)
+            return 1;
+
+        int graphCount = 0;
+        long limit = lastDate.getTime();
+        while (limit >= firstDate.getTime()) {
+            graphCount++;
+            limit = getStartOfYear(currentDate, graphCount).getTime();
+        }
+
+        return graphCount;
     }
 
     public float getHighestDebtValue(float[] dataset) {
@@ -169,8 +452,142 @@ public class GraphRecyclerViewAdapter extends RecyclerView.Adapter<GraphRecycler
         }
     }
 
-    public void setData(List<float[]> data) {
-        datasets = data;
+    public Date getStartOfWeek(Date currentDate) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentDate);
+        int dayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+        int difference;
+        switch (dayOfWeek) {
+            case 1:
+                difference = -6;
+                break;
+            default:
+                difference = 2 - dayOfWeek;
+                break;
+        }
+        calendar.add(Calendar.DATE, difference);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 1);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    public Date getStartOfWeek(Date currentDate, int position) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(getStartOfWeek(currentDate));
+        calendar.add(Calendar.DATE, -7 * position);
+        return calendar.getTime();
+    }
+
+    public Date getEndOfWeek(Date startOfWeek) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startOfWeek);
+        calendar.add(Calendar.DATE, 7);
+        calendar.add(Calendar.MILLISECOND, -1);
+        return calendar.getTime();
+    }
+
+    public Date getStartOfMonth(Date currentDate) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentDate);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 1);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    public Date getStartOfMonth(Date currentDate, int position) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(getStartOfMonth(currentDate));
+        calendar.add(Calendar.MONTH, -1 * position);
+        return calendar.getTime();
+    }
+
+    public Date getEndOfMonth(Date startOfMonth) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startOfMonth);
+        calendar.add(Calendar.MONTH, 1);
+        calendar.add(Calendar.MILLISECOND, -1);
+        return calendar.getTime();
+    }
+
+    public Date getStartOfYear(Date currentDate) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentDate);
+        calendar.set(Calendar.MONTH, 0);
+        calendar.set(Calendar.DATE, 1);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 1);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    public Date getStartOfYear(Date currentDate, int position) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(getStartOfYear(currentDate));
+        calendar.add(Calendar.YEAR, -1 * position);
+        return calendar.getTime();
+    }
+
+    public Date getEndOfYear(Date startOfYear) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startOfYear);
+        calendar.add(Calendar.YEAR, 1);
+        calendar.add(Calendar.MILLISECOND, -1);
+        return calendar.getTime();
+    }
+
+    public float[] getCurrentMinutelyData() {
+        Date startOfMinute = getStartOfMinute(currentDate);
+        Date endOfMinute = getEndOfMinute(startOfMinute);
+        return convertCurrentData(startOfMinute, endOfMinute);
+    }
+
+    public Date getStartOfMinute(Date currentDate) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(currentDate);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        return calendar.getTime();
+    }
+
+    public float[] getMinutelyDataAt(int position) {
+        Date startOfMinute = getStartOfMinute(currentDate, position);
+        Date endOfMinute = getEndOfMinute(startOfMinute);
+        return convertDataBetween(startOfMinute, endOfMinute);
+    }
+
+    public int amountOfMinutelyGraphs(Date firstDate, Date lastDate) {
+        if (dataset.size() < 1)
+            return 1;
+
+        int graphCount = 0;
+        long limit = lastDate.getTime();
+        while (limit >= firstDate.getTime()) {
+            graphCount++;
+            limit = getStartOfMinute(currentDate, graphCount).getTime();
+        }
+
+        return graphCount;
+    }
+
+    public Date getStartOfMinute(Date currentDate, int position) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(getStartOfMinute(currentDate));
+        calendar.add(Calendar.MINUTE, -1 * position);
+        return calendar.getTime();
+    }
+
+    public Date getEndOfMinute(Date startOfMinute) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(startOfMinute);
+        calendar.add(Calendar.MINUTE, 1);
+        calendar.add(Calendar.MILLISECOND, -1);
+        return calendar.getTime();
     }
 
     public class ViewHolder extends RecyclerView.ViewHolder {
@@ -184,7 +601,6 @@ public class GraphRecyclerViewAdapter extends RecyclerView.Adapter<GraphRecycler
             detailsView = (TextView) view.findViewById(R.id.list_item_graph_details);
             periodGraphView = (PeriodGraphView) view.findViewById(R.id.list_item_graph);
         }
-
 
         @Override
         public String toString() {

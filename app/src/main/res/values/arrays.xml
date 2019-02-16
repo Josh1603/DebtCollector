@@ -2,13 +2,13 @@
 <resources>
     <!-- theme names array -->
     <string-array name="themes_array">
-        <item>Default</item>
+        <item>Beluga</item>
         <!--item>default theme</item-->
 
-        <item>Halloween</item>
+        <item>Wisteria</item>
         <!--item>halloween theme</item-->
 
-        <item>Rose\'s Theme</item>
+        <item>Soft Pastel</item>
         <!--item>rose's theme</item-->
 
     </string-array>
@@ -20,10 +20,10 @@
         <item>defaultTheme</item>
 
         <!--item>halloween theme</item-->
-        <item>halloweenTheme</item>
+        <item>wisteriaTheme</item>
 
         <!--item>rose's theme</item-->
-        <item>rosesTheme</item>
+        <item>softPastelTheme</item>
 
     </string-array>
 </resources>
