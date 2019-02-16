@@ -1,12 +1,19 @@
 package syd.jjj.debtcollector;
 
+import android.arch.persistence.room.Delete;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.AsyncTask;
 import android.os.Bundle;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.preference.Preference;
 import android.support.v7.preference.PreferenceManager;
 
-public class SettingsActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
+public class SettingsActivity extends AppCompatActivity implements
+        SharedPreferences.OnSharedPreferenceChangeListener,
+        DeleteAllConfirmationFragment.DeleteAllCallback {
 
     private SharedPreferences sharedPreferences;
     private String currentTheme;
@@ -22,15 +29,16 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
             setTheme(R.style.DefaultAppTheme);
         }
 
-        if (currentTheme.equals("halloweenTheme")) {
-            setTheme(R.style.Halloween);
+        if (currentTheme.equals("wisteriaTheme")) {
+            setTheme(R.style.Wisteria);
         }
 
-        if(currentTheme.equals("rosesTheme")){
-            setTheme(R.style.RosesTheme);
+        if(currentTheme.equals("softPastelTheme")){
+            setTheme(R.style.SoftPastel);
         }
 
         sharedPreferences.registerOnSharedPreferenceChangeListener(this);
+
 
 
         super.onCreate(savedInstanceState);
@@ -47,4 +55,24 @@ public class SettingsActivity extends AppCompatActivity implements SharedPrefere
                 }
     }
 
+    @Override
+    public void DeleteAllData(){
+
+        new AsyncTask<DebtValue, Void, Void>() {
+            @Override
+            protected Void doInBackground(DebtValue... debtValues) {
+                DebtValueDatabase debtValueDatabase =
+                        DebtValueDatabaseAccessor.getInstance(getApplication());
+                debtValueDatabase.debtValueDAO().deleteAllDebtValues();
+                return null;
+            }
+        }.execute();
+    }
+
+    @Override
+    public void onBackPressed()
+    {
+        NavUtils.navigateUpFromSameTask(this);
+        super.onBackPressed();  // optional depending on your needs
+    }
 }

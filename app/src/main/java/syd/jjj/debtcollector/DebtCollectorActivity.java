@@ -1,6 +1,5 @@
 package syd.jjj.debtcollector;
 
-import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
@@ -18,7 +17,6 @@ import android.support.v4.app.FragmentManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.LinearSnapHelper;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.SimpleItemAnimator;
 import android.support.v7.widget.SnapHelper;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -45,7 +43,11 @@ import java.util.List;
  * basic data persistence. Calculations are delegated to the DebtCalculation class.
  */
 public class DebtCollectorActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, DPIDialogFragmentInterface, DCIDialogFragmentInterface {
+        implements
+        NavigationView.OnNavigationItemSelectedListener,
+        DPIDialogFragmentInterface,
+        DCIDialogFragmentInterface
+{
 
     private TextView currentDebtValue;
     private DebtCalculations debtCalculations;
@@ -61,7 +63,6 @@ public class DebtCollectorActivity extends AppCompatActivity
     private DebtValue currentDebtValueObj;
     private RecyclerView mRecyclerView;
     private DebtValueViewModel debtValueViewModel;
-    List<float[]> noData = new ArrayList<float[]>();
     GraphRecyclerViewAdapter adapter;
 
     /**
@@ -84,34 +85,6 @@ public class DebtCollectorActivity extends AppCompatActivity
         displayCurrentDebt();
         setButtonListeners();
 
-        /*
-        dummyGraphDataSet = new DummyGraphDataSet();
-
-        mDummyGraphDataSets = new ArrayList<>(0);
-        DummyGraphDataSet dummyGraphDataSet1 = new DummyGraphDataSet();
-        DummyGraphDataSet dummyGraphDataSet2 = new DummyGraphDataSet();
-        DummyGraphDataSet dummyGraphDataSet3 = new DummyGraphDataSet();
-        DummyGraphDataSet dummyGraphDataSet4 = new DummyGraphDataSet();
-        DummyGraphDataSet dummyGraphDataSet5 = new DummyGraphDataSet();
-        DummyGraphDataSet dummyGraphDataSet6 = new DummyGraphDataSet();
-
-        mDummyGraphDataSets.add(dummyGraphDataSet1);
-        mGraphRecyclerViewAdapter.notifyItemInserted(mDummyGraphDataSets.indexOf(dummyGraphDataSet1));
-        mDummyGraphDataSets.add(dummyGraphDataSet2);
-        mGraphRecyclerViewAdapter.notifyItemInserted(mDummyGraphDataSets.indexOf(dummyGraphDataSet2));
-        mDummyGraphDataSets.add(dummyGraphDataSet3);
-        mGraphRecyclerViewAdapter.notifyItemInserted(mDummyGraphDataSets.indexOf(dummyGraphDataSet3));
-        mDummyGraphDataSets.add(dummyGraphDataSet4);
-        mGraphRecyclerViewAdapter.notifyItemInserted(mDummyGraphDataSets.indexOf(dummyGraphDataSet4));
-        mDummyGraphDataSets.add(dummyGraphDataSet5);
-        mGraphRecyclerViewAdapter.notifyItemInserted(mDummyGraphDataSets.indexOf(dummyGraphDataSet5));
-        mDummyGraphDataSets.add(dummyGraphDataSet6);
-        mGraphRecyclerViewAdapter.notifyItemInserted(mDummyGraphDataSets.indexOf(dummyGraphDataSet6));
-
-        mRecyclerView.setAdapter(new GraphRecyclerViewAdapter(mDummyGraphDataSets));
-
-        */
-
         DrawerLayout drawer = findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
@@ -122,45 +95,54 @@ public class DebtCollectorActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         mRecyclerView = findViewById(R.id.graph_list);
-        //mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setHasFixedSize(true);
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(
-                this, LinearLayoutManager.HORIZONTAL, false);
-        linearLayoutManager.setStackFromEnd(true);
+                this, LinearLayoutManager.HORIZONTAL, true);
         mRecyclerView.setLayoutManager(linearLayoutManager);
         SnapHelper snapHelper = new LinearSnapHelper();
         snapHelper.attachToRecyclerView(mRecyclerView);
 
-        float[] initData = new float[]{0};
-        noData.add(initData);
-        adapter = new GraphRecyclerViewAdapter(noData, getPeriod());
+        adapter = new GraphRecyclerViewAdapter(new ArrayList<DebtValue>(), getPeriod());
         mRecyclerView.setAdapter(adapter);
 
         debtValueViewModel = ViewModelProviders.of(this).get(DebtValueViewModel.class);
-        debtValueViewModel.getData(getPeriod()).observe(this, new Observer<List<float[]>>() {
+        debtValueViewModel.getData().observe(this, new Observer<List<DebtValue>>() {
             @Override
-            public void onChanged(@Nullable List<float[]> data) {
+            public void onChanged(@Nullable List<DebtValue> data) {
                 // Returns cached data automatically after a configuration change,
                 // and will be fired again if underlying LiveData object is modified
                 if (data != null) {
-                    adapter.setDatasets(data);
+                    adapter.setDataset(data);
                     adapter.notifyDataSetChanged();
+                }
+
+                if (data.size() > 0 && adapter.getEndDate() != null) {
+                    // Inserts a new view into the RecyclerView if current data input exceeds bounds of the view.
+                    if (data.get(data.size() - 1).getMDate().getTime() > adapter.getEndDate().getTime()){
+                        adapter = new GraphRecyclerViewAdapter(data, getPeriod());
+                        mRecyclerView.swapAdapter(adapter, true);
+                    }
+                }
+
+                // Resets debt counter after data history is deleted.
+                if (data.size() < 1) {
+                    resetDebtValue();
                 }
             }
         });
-        }
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
+        // Inflates the menu. This adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so float
-        // as you specify a parent activity in AndroidManifest.xml.
+        // Action bar item clicks are handled here. The action bar
+        // automatically handles clicks on the Home/Up button.
         int id = item.getItemId();
 
         if(id == R.id.action_settings) {
@@ -175,7 +157,7 @@ public class DebtCollectorActivity extends AppCompatActivity
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(@NonNull MenuItem item) {
-        // Handle navigation view item clicks here.
+        // Navigation view item clicks are handled here.
         int id = item.getItemId();
 
         if (id == R.id.nav_manage) {
@@ -285,6 +267,15 @@ public class DebtCollectorActivity extends AppCompatActivity
         payOffDebt();
     }
 
+    public void resetDebtValue(){
+        sharedPreferences = getSharedPreferences(sharedPreferenceName, MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString(CURRENT_DOLLAR_TOTAL_KEY, "0");
+        editor.putString(CURRENT_CENT_TOTAL_KEY, "00");
+        editor.apply();
+        displayCurrentDebt();
+    }
+
     /**
      * Stores and displays a new debt value.
      */
@@ -292,7 +283,7 @@ public class DebtCollectorActivity extends AppCompatActivity
         debtCalculations.newDebtValue();
         storeCurrentDollarValue();
         storeCurrentCentValue();
-        storeData();
+        storeData(getCurrentDollarValue(), getCurrentCentValue());
         displayCurrentDebt();
     }
 
@@ -313,7 +304,7 @@ public class DebtCollectorActivity extends AppCompatActivity
         debtCalculations.addDebt();
         storeCurrentDollarValue();
         storeCurrentCentValue();
-        storeData();
+        storeData(getCurrentDollarValue(), getCurrentCentValue());
         displayCurrentDebt();
     }
 
@@ -325,17 +316,23 @@ public class DebtCollectorActivity extends AppCompatActivity
         debtCalculations.payOffDebt();
         storeCurrentDollarValue();
         storeCurrentCentValue();
-        storeData();
+        storeData(getCurrentDollarValue(), getCurrentCentValue());
         displayCurrentDebt();
         if (debtCalculations.isPaidOff() && debtCalculations.getRemainderText().equals("")) {
-            Snackbar debtPaidOffSnackbar = Snackbar.make(findViewById(R.id.main_view), "Woohoo! You've paid off all your debt.", Snackbar.LENGTH_LONG);
+            Snackbar debtPaidOffSnackbar = Snackbar.make(findViewById(R.id.coordinator), "Woohoo! You've paid off all your debt.", Snackbar.LENGTH_SHORT);
             centerAlignSnackbarText(debtPaidOffSnackbar);
+            TextView snackbarTextView = debtPaidOffSnackbar.getView().
+                    findViewById(android.support.design.R.id.snackbar_text);
+            snackbarTextView.setTextColor(getResources().getColor(R.color.white));
             debtPaidOffSnackbar.show();
         }
 
         if (debtCalculations.isPaidOff() && !debtCalculations.getRemainderText().equals("")) {
-            Snackbar debtPaidOffSnackbar = Snackbar.make(findViewById(R.id.main_view), "You've paid off your debt and an additional " + debtCalculations.getRemainderText() + "!", Snackbar.LENGTH_LONG);
+            Snackbar debtPaidOffSnackbar = Snackbar.make(findViewById(R.id.coordinator), "You've paid off your debt and an additional " + debtCalculations.getRemainderText() + "!", Snackbar.LENGTH_SHORT);
             centerAlignSnackbarText(debtPaidOffSnackbar);
+            TextView snackbarTextView = debtPaidOffSnackbar.getView().
+                    findViewById(android.support.design.R.id.snackbar_text);
+            snackbarTextView.setTextColor(getResources().getColor(R.color.white));
             debtPaidOffSnackbar.show();
         }
     }
@@ -352,7 +349,7 @@ public class DebtCollectorActivity extends AppCompatActivity
                     getCurrentCentValue(),
                     previousDollarValue,
                     previousCentValue);
-            adjustMostRecentDebtValue();
+            adjustMostRecentDebtValue(previousDollarValue, previousCentValue);
             newDebtValueNoStore();
         }
     }
@@ -380,15 +377,15 @@ public class DebtCollectorActivity extends AppCompatActivity
     /**
      * Stores current debt value to a Room database.
      */
-    public void storeData() {
-        currentDebtValueObj = new DebtValue(new Date(), getCurrentDollarValue(), getCurrentCentValue());
+    public void storeData(String dollarValue, String centValue) {
+        currentDebtValueObj = new DebtValue(new Date(), dollarValue, centValue);
         new AsyncTask<DebtValue, Void, Void>() {
             @Override
             protected Void doInBackground(DebtValue... debtValues) {
                 DebtValueDatabase debtValueDatabase =
                         DebtValueDatabaseAccessor.getInstance(getApplication());
                 debtValueDatabase.debtValueDAO().insertDebtValue(debtValues[0]);
-                debtValueViewModel.getData(getPeriod());
+                debtValueViewModel.getData();
                 return null;
             }
         }.execute(currentDebtValueObj);
@@ -398,21 +395,21 @@ public class DebtCollectorActivity extends AppCompatActivity
      * Adds or removes most recent debt value from the Room database depending on whether it was an
      * undo or a 'double' undo.
      */
-    public void adjustMostRecentDebtValue() {
+    public void adjustMostRecentDebtValue(String previousDollarValue, String previousCentValue) {
         if (currentDebtValueObj != null) {
             new AsyncTask<DebtValue, Void, Void>() {
                 @Override
                 protected Void doInBackground(DebtValue... debtValues) {
                     DebtValueDatabase debtValueDatabase =
                             DebtValueDatabaseAccessor.getInstance(getApplication());
-                    debtValueDatabase.debtValueDAO().insertDebtValue(debtValues[0]);
-                    debtValueViewModel.getData(getPeriod());
+                    debtValueDatabase.debtValueDAO().deleteDebtValue(debtValues[0]);
+                    debtValueViewModel.getData();
                     return null;
                 }
             }.execute(currentDebtValueObj);
             currentDebtValueObj = null;
         } else {
-            storeData();
+            storeData(previousDollarValue, previousCentValue);
         }
     }
 
@@ -456,17 +453,19 @@ public class DebtCollectorActivity extends AppCompatActivity
         }
     }
 
-
+    /**
+     * Overriden method ensures to be inflated Toolbar is instantiated.
+     * @param resid The resource ID for the theme to be set.
+     */
+    @Override
     public void setTheme(int resid) {
         super.setTheme(resid);
-        Toolbar actionToolBar = findViewById(R.id.toolbar);
-        if (actionToolBar != null) {
-            //actionToolBar.setBackgroundColor();
-            //Set shared preferences for the background colour
-            //Do the same for the Navigation Header
-        }
+        findViewById(R.id.toolbar);
     }
 
+    /**
+     * Sets the theme according to the current preference.
+     */
     public void initialiseTheme() {
         sharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
 
@@ -476,21 +475,26 @@ public class DebtCollectorActivity extends AppCompatActivity
             setTheme(R.style.DefaultAppTheme);
         }
 
-        if(currentTheme.equals("halloweenTheme")){
-            setTheme(R.style.Halloween);
+        if(currentTheme.equals("wisteriaTheme")){
+            setTheme(R.style.Wisteria);
 
+            /*
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
 
                 // Sets status bar icons to black on the main activity.
                 getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN|View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
             }
+            */
         }
 
-        if(currentTheme.equals("rosesTheme")){
-            setTheme(R.style.RosesTheme);
+        if(currentTheme.equals("softPastelTheme")){
+            setTheme(R.style.SoftPastel);
         }
     }
 
+    /**
+     * Sets listeners for bottom app bar action buttons and period buttons.
+     */
     private void setButtonListeners() {
         ImageButton addButton = findViewById(R.id.addButton);
         ImageButton payOffButton = findViewById(R.id.payOffButton);
@@ -578,7 +582,7 @@ public class DebtCollectorActivity extends AppCompatActivity
                 theme.resolveAttribute(R.attr.background, typedValue, true);
                 ((Button) v).setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
 
-                theme.resolveAttribute(R.attr.mainImageButtonTint, typedValue, true);
+                theme.resolveAttribute(R.attr.periodButtonTextAndOutlineColor, typedValue, true);
 
                 monthlyButton.setBackgroundResource(R.drawable.button_unfocused);
                 monthlyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
@@ -605,7 +609,7 @@ public class DebtCollectorActivity extends AppCompatActivity
                 theme.resolveAttribute(R.attr.background, typedValue, true);
                 ((Button) v).setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
 
-                theme.resolveAttribute(R.attr.mainImageButtonTint, typedValue, true);
+                theme.resolveAttribute(R.attr.periodButtonTextAndOutlineColor, typedValue, true);
 
                 weeklyButton.setBackgroundResource(R.drawable.button_unfocused);
                 weeklyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
@@ -632,7 +636,7 @@ public class DebtCollectorActivity extends AppCompatActivity
                 theme.resolveAttribute(R.attr.background, typedValue, true);
                 ((Button) v).setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
 
-                theme.resolveAttribute(R.attr.mainImageButtonTint, typedValue, true);
+                theme.resolveAttribute(R.attr.periodButtonTextAndOutlineColor, typedValue, true);
 
                 weeklyButton.setBackgroundResource(R.drawable.button_unfocused);
                 weeklyButton.setTextColor(ContextCompat.getColor(getApplicationContext(), typedValue.resourceId));
@@ -653,6 +657,9 @@ public class DebtCollectorActivity extends AppCompatActivity
         return sharedPreferences.getString(CURRENT_PERIOD_KEY, "MONTHLY");
     }
 
+    /**
+     * Sets the colour of the period buttons according to current selection.
+     */
     public void setCurrentPeriodButton() {
 
         final Button weeklyButton = findViewById(R.id.weekly_button);
@@ -680,40 +687,14 @@ public class DebtCollectorActivity extends AppCompatActivity
         }
     }
 
-    /*
-
-    public void drawGraph() {
-        DebtValue highestDebtValue = dummyGraphDataSet.getHighestDebtValue();
-        float[] dummyGraphData = dummyGraphDataSet.getDummyData();
-        periodGraphView = new PeriodGraphView(this);
-        Calendar cal = Calendar.getInstance();
-        cal.set(2019, Calendar.JANUARY, 14);
-        String period = getPeriod();
-        periodGraphView.setXAxisScaleFactor(cal.getTime(), period);
-        periodGraphView.setYAxisScaleFactor(highestDebtValue);
-        periodGraphView.setDataSet(dummyGraphData);
-    }
-
-    public void drawGraph(PeriodGraphView periodGraphV) {
-        DebtValue highestDebtValue = dummyGraphDataSet.getHighestDebtValue();
-        float[] dummyGraphData = dummyGraphDataSet.getDummyData();
-        periodGraphV = new PeriodGraphView(this);
-        Calendar cal = Calendar.getInstance();
-        cal.set(2019, Calendar.JANUARY, 14);
-        String period = getPeriod();
-        periodGraphV.setXAxisScaleFactor(cal.getTime(), period);
-        periodGraphV.setYAxisScaleFactor(highestDebtValue);
-        periodGraphV.setDataSet(dummyGraphData);
-    }
-
-    */
-
     /**
      * Loads data from the Room database according to the current period setting.
      */
     public void updateUI() {
-        adapter = new GraphRecyclerViewAdapter(noData, getPeriod());
+        List<DebtValue> dataset = adapter.getDataset();
+        adapter = new GraphRecyclerViewAdapter(dataset, getPeriod());
         mRecyclerView.swapAdapter(adapter, true);
-        debtValueViewModel.getData(getPeriod());
+        debtValueViewModel.getData();
+
     }
 }

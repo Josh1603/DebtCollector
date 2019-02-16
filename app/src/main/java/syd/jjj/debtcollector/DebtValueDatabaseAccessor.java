@@ -1,15 +1,8 @@
 package syd.jjj.debtcollector;
 
-import android.arch.lifecycle.LiveData;
-import android.arch.persistence.db.SupportSQLiteDatabase;
-import android.arch.persistence.room.Room;
-import android.arch.persistence.room.RoomDatabase;
-import android.content.Context;
-import android.os.AsyncTask;
-import android.support.annotation.NonNull;
 
-import java.util.Date;
-import java.util.List;
+import android.arch.persistence.room.Room;
+import android.content.Context;
 
 public class DebtValueDatabaseAccessor {
 

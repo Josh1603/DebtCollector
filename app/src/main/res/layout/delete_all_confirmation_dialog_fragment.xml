@@ -1,54 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <android.support.constraint.ConstraintLayout
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:background="?attr/fragmentBackgroundColor"
     android:layout_gravity="center">
 
     <TextView
-        android:id="@+id/set_new_message"
+        android:id="@+id/delete_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="@dimen/activity_horizontal_margin"
         android:layout_marginRight="@dimen/activity_horizontal_margin"
-        android:text="@string/set_as_new_total"
+        android:layout_marginTop="8dp"
+        android:text="Delete All Debt History"
         android:textSize="24sp"
-
+        app:layout_constraintBottom_toTopOf="@id/delete_subtitle"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/dollar_sign" />
+        app:layout_constraintVertical_chainStyle="spread_inside" />
 
     <TextView
-        android:id="@+id/dollar_sign"
-        android:layout_width="wrap_content"
+        android:id="@+id/delete_subtitle"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/dollar_sign"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toTopOf="@id/newTotalButton"
-        app:layout_constraintHorizontal_chainStyle="packed"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@+id/dollar_cent"
-        app:layout_constraintTop_toBottomOf="@id/set_new_message" />
+        android:text="This will erase all debt history. Once confirmed this action cannot be undone."
+        android:textSize="16sp"
+        android:gravity="center"
 
-    <EditText
-        android:id="@+id/dollar_cent"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:hint="@string/_0_00"
-        android:textSize="22sp"
-        android:selectAllOnFocus="true"
-        android:inputType="numberDecimal"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintLeft_toRightOf="@+id/dollar_sign"
-        app:layout_constraintTop_toBottomOf="@id/set_new_message"
-        app:layout_constraintBottom_toTopOf="@+id/newTotalButton"
-        android:imeOptions="actionDone|flagNoExtractUi"/>
+        app:layout_constraintLeft_toRightOf="@id/guideline_left"
+        app:layout_constraintRight_toLeftOf="@id/guideline_right"
+        app:layout_constraintTop_toBottomOf="@id/delete_title"
+        app:layout_constraintBottom_toTopOf="@id/confirmDeleteButton" />
+
+
 
     <ImageButton
-        android:id="@+id/newTotalButton"
+        android:id="@+id/confirmDeleteButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/image_button_spacer_2dp"
@@ -61,11 +52,11 @@
         android:tint="?attr/mainImageButtonTint"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toLeftOf="@id/cancelButton"
-        app:layout_constraintTop_toBottomOf="@+id/dollar_cent" />
+        app:layout_constraintRight_toLeftOf="@id/cancelDeleteButton"
+        app:layout_constraintTop_toBottomOf="@+id/cents" />
 
     <ImageButton
-        android:id="@+id/cancelButton"
+        android:id="@+id/cancelDeleteButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/image_button_spacer_2dp"
@@ -77,8 +68,24 @@
         android:text="@string/cancel_button"
         android:tint="?attr/mainImageButtonTint"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toRightOf="@id/newTotalButton"
+        app:layout_constraintLeft_toRightOf="@id/confirmDeleteButton"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/dollar_cent" />
+        app:layout_constraintTop_toBottomOf="@+id/cents" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/activity_horizontal_margin"
+        app:layout_constraintGuide_percent="0.1" />
+
+    <android.support.constraint.Guideline
+        android:id="@+id/guideline_right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/activity_horizontal_margin"
+        app:layout_constraintGuide_percent="0.9" />
 
 </android.support.constraint.ConstraintLayout>
